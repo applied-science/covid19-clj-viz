@@ -51,9 +51,8 @@
                                                  :else          0)
                                  :cases-per-100k cases-per-100k)))
                       features)))
-       (json/write-value (java.io.File. "resources/public/public/data/china-provinces.geo.json")))))
+       (json/write-value (java.io.File. "resources/public/public/data/china-provinces.geo.json")))
 
-  
   )
 
 ;; Minimum viable geographic visualization
