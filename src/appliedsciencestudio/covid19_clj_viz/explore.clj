@@ -56,10 +56,10 @@
                    (conj acc (max 0 (- n-today n-yesterday))))
                  [])
          (zipmap (map (comp str parse-covid19-date)
-                      (drop 4 (first rows)))))))
+                      (drop 5 (first rows)))))))
 
 (comment
-  (new-daily-cases-in :recovered "Mainland China")
+  (new-daily-cases-in :cases "Republic of Korea")
 
   )
 
