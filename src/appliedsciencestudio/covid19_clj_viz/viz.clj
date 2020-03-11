@@ -273,3 +273,47 @@
                                        {:field "cases-per-100k" :type "quantitative"}]}}))
 
 ;; Beyond this we rely on charts.
+
+
+;;;; Total Cases of Coronavirus Outside of China
+;; from Chart 9 https://medium.com/@tomaspueyo/coronavirus-act-today-or-people-will-die-f4d3d9cd99ca
+
+(def corona-outside-china-data
+  (->> covid19-cases-csv
+       rest ; drop header
+       (remove (comp #{"Mainland China" "Others"} second))
+       (group-by second)
+       (map (fn [[k v]]
+              [k (->> v
+                      (apply map (fn [& colls] colls)) ; turn it sideways so we look at data column-wise
+                      (drop 4) ; drop province, country, lat, long
+                      (map (fn [cases-across-provinces]
+                             (apply + (map #(Integer/parseInt %) cases-across-provinces))))
+                      (zipmap (map (comp str parse-covid19-date)
+                                   (drop 4 (first covid19-cases-csv)))))]))
+       (reduce (fn [vega-values [country date->cases]]
+                 (if (> 500 (apply max (vals date->cases))) ; ignore countries with fewer than X cases
+                   vega-values
+                   (apply conj vega-values
+                          (map (fn [[d c]]
+                                 {:date d
+                                  :cases c
+                                  :country country})
+                               date->cases))))
+               [])
+       ;; purely for our human reading convenience:
+       (sort-by (juxt :country :date))))
+
+(oz/view!
+ (merge-with merge oz-config
+             {:title {:text "Total Cases of Coronavirus Outside of China"
+                      :subtitle "(Countries with >50 cases as of 11.3.2020)"}
+              :width 1200 :height 700
+              :data {:values corona-outside-china-data}
+              :mark {:type "line" :strokeWidth 4 :point "transparent"}
+              :encoding {:x {:field "date", :type "temporal"},
+                         :y {:field "cases", :type "quantitative"}
+                         ;; TODO tooltip for country
+                         :color {:field "country", :type "nominal"}
+                         :tooltip {:field "country", :type "nominal"}}}))
+
