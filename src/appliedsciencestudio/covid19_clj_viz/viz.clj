@@ -122,6 +122,9 @@
   "From https://github.com/CSSEGISandData/COVID-19/tree/master/who_covid_19_situation_reports"
   (csv/read-csv (slurp "resources/COVID-19/csse_covid_19_data/csse_covid_19_time_series/time_series_19-covid-Deaths.csv")))
 
+(defn parse-covid19-date [mm-dd-yy]
+  (LocalDate/parse mm-dd-yy (DateTimeFormatter/ofPattern "M/d/yy")))
+
 (def barchart-dimensions
   {:width 510 :height 800})
 

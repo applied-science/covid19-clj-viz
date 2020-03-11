@@ -36,15 +36,12 @@
 
 ;;;; Cases over time
 
-
-(defn parse-covid19-date [mm-dd-yy]
-  (LocalDate/parse mm-dd-yy (DateTimeFormatter/ofPattern "M/d/yy")))
-
 (defn new-daily-cases-in [kind country]
   (let [rows (case kind
                :recovered viz/covid19-recovered-csv
                :deaths    viz/covid19-deaths-csv
                :cases     viz/covid19-cases-csv)]
+    ;; BUG this only works for countries without provinces
     (->> rows
          rest
          (filter (comp #{country} second))
@@ -55,7 +52,7 @@
          (reduce (fn [acc [n-yesterday n-today]]
                    (conj acc (max 0 (- n-today n-yesterday))))
                  [])
-         (zipmap (map (comp str parse-covid19-date)
+         (zipmap (map (comp str viz/parse-covid19-date)
                       (drop 5 (first rows)))))))
 
 (comment
