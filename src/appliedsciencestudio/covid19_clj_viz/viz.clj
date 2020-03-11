@@ -24,7 +24,7 @@
                          (-> feature
                              (assoc :Bundesland     (:NAME_1 (:properties feature)))
                              (assoc :Cases          (get deutschland/cases (:NAME_1 (:properties feature)) 0))
-                             (assoc :Population     (get deutschland/population (deutschland/normalize-bundesland (:NAME_1 (:properties feature)))))
+                             (assoc :Population     (get deutschland/population (get deutschland/normalize-bundesland (:NAME_1 (:properties feature)) (:NAME_1 (:properties feature)))))
                              (assoc :Cases-per-100k (get-in deutschland/bundeslaender-data [(:NAME_1 (:properties feature)) :cases-per-100k] 0))))
                        features)))
        (json/write-value (java.io.File. "resources/public/public/data/deutschland-bundeslaender.geo.json")))
@@ -114,6 +114,14 @@
   "From https://github.com/CSSEGISandData/COVID-19/tree/master/who_covid_19_situation_reports"
   (csv/read-csv (slurp "resources/COVID-19/csse_covid_19_data/csse_covid_19_time_series/time_series_19-covid-Confirmed.csv")))
 
+(def covid19-recovered-csv
+  "From https://github.com/CSSEGISandData/COVID-19/tree/master/who_covid_19_situation_reports"
+  (csv/read-csv (slurp "resources/COVID-19/csse_covid_19_data/csse_covid_19_time_series/time_series_19-covid-Recovered.csv")))
+
+(def covid19-deaths-csv
+  "From https://github.com/CSSEGISandData/COVID-19/tree/master/who_covid_19_situation_reports"
+  (csv/read-csv (slurp "resources/COVID-19/csse_covid_19_data/csse_covid_19_time_series/time_series_19-covid-Deaths.csv")))
+
 (def barchart-dimensions
   {:width 510 :height 800})
 
@@ -140,7 +148,8 @@
                                               [])
                                       (concat (sort-by :state-or-province (vals deutschland/bundeslaender-data)))
                                       ;; FIXME this is the line to toggle:
-                                      (remove (comp #{"Hubei"} :state-or-province)))},
+                                      (remove (comp #{"Hubei"} :state-or-province))
+                                      #_ (sort-by :cases))},
                   :mark {:type "bar" :color "#9085DA"}
                   :encoding {:x {:field "cases", :type "quantitative"}
                              :y {:field "state-or-province", :type "ordinal"
