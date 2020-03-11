@@ -70,26 +70,30 @@
                        :gradientThickness 40}
               :axis {:labelFont font
                      :titleFont font
-                     :titleFontSize 20}}}))
+                     :titleFontSize 20}}
+     :title {:font "IBM Plex Sans"
+             :fontSize 14
+             :anchor "middle"}}))
 
 (def germany-dimensions
   {:width 550 :height 700})
 
 ;; Geographic visualization of cases in each Germany state, shaded proportional to population
-(oz/view! (merge oz-config germany-dimensions
-                 {:title "COVID19 cases in Germany, by state, per 100k inhabitants"
-                  :data {:name "germany"
-                         :url "/public/data/deutschland-bundeslaender.geo.json",
-                         :format {:property "features"}},
-                  :mark {:type "geoshape" :stroke "white" :strokeWidth 1}
-                  :encoding {:color {:field "Cases-per-100k",
-                                     :type "quantitative"
-                                     :scale {:domain [0
-                                                      ;; NB: compare Hubei's 111 to German maximum. (It was 0.5 when I started this project, and ~1 now.)
-                                                      (apply max (map :cases-per-100k (vals deutschland/bundeslaender-data)))]}}
-                             :tooltip [{:field "Bundesland" :type "nominal"}
-                                       {:field "Cases" :type "quantitative"}]}
-                  :selection {:highlight {:on "mouseover" :type "single"}}}))
+(oz/view!
+ (merge-with merge oz-config germany-dimensions
+             {:title {:text "COVID19 cases in Germany, by state, per 100k inhabitants"}
+              :data {:name "germany"
+                     :url "/public/data/deutschland-bundeslaender.geo.json",
+                     :format {:property "features"}},
+              :mark {:type "geoshape" :stroke "white" :strokeWidth 1}
+              :encoding {:color {:field "Cases-per-100k",
+                                 :type "quantitative"
+                                 :scale {:domain [0
+                                                  ;; NB: compare Hubei's 111 to German maximum. (It was 0.5 when I started this project, and ~1 now.)
+                                                  (apply max (map :cases-per-100k (vals deutschland/bundeslaender-data)))]}}
+                         :tooltip [{:field "Bundesland" :type "nominal"}
+                                   {:field "Cases" :type "quantitative"}]}
+              :selection {:highlight {:on "mouseover" :type "single"}}}))
 
 ;; Deceptive version of that same map
 ;;   - red has emotional valence ["#fde5d9" "#a41e23"]
