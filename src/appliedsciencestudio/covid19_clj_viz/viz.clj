@@ -10,24 +10,27 @@
 
 (oz/start-server! 8082)
 
+(def deutschland-geojson-with-data
+  (update (json/read-value (java.io.File. "resources/public/public/data/deutschland-bundeslaender-original.geo.json")
+                           (json/object-mapper {:decode-key-fn true}))
+          :features
+          (fn [features]
+            (mapv (fn [feature]
+                    (-> feature
+                        (assoc :Bundesland     (:NAME_1 (:properties feature)))
+                        (assoc :Cases          (get deutschland/cases (:NAME_1 (:properties feature)) 0))
+                        (assoc :Population     (get deutschland/population (get deutschland/normalize-bundesland (:NAME_1 (:properties feature)) (:NAME_1 (:properties feature)))))
+                        (assoc :Cases-per-100k (get-in deutschland/bundeslaender-data [(:NAME_1 (:properties feature)) :cases-per-100k] 0))))
+                  features))))
+
 (comment
 
   ;;;; Create new GeoJSONs with population & COVID19 data added
 
   ;; Germany
   ;; medium quality GeoJSON from https://github.com/isellsoap/deutschlandGeoJSON/blob/master/2_bundeslaender/3_mittel.geojson
-  (->> (update (json/read-value (java.io.File. "resources/public/public/data/deutschland-bundeslaender-original.geo.json")
-                                (json/object-mapper {:decode-key-fn true}))
-               :features
-               (fn [features]
-                 (mapv (fn [feature]
-                         (-> feature
-                             (assoc :Bundesland     (:NAME_1 (:properties feature)))
-                             (assoc :Cases          (get deutschland/cases (:NAME_1 (:properties feature)) 0))
-                             (assoc :Population     (get deutschland/population (get deutschland/normalize-bundesland (:NAME_1 (:properties feature)) (:NAME_1 (:properties feature)))))
-                             (assoc :Cases-per-100k (get-in deutschland/bundeslaender-data [(:NAME_1 (:properties feature)) :cases-per-100k] 0))))
-                       features)))
-       (json/write-value (java.io.File. "resources/public/public/data/deutschland-bundeslaender.geo.json")))
+  (json/write-value (java.io.File. "resources/public/public/data/deutschland-bundeslaender.geo.json")
+                    deutschland-geojson-with-data)
 
   ;; China
   (->> (update (json/read-value (java.io.File. "resources/public/public/data/china-provinces-original.geo.json")
@@ -83,7 +86,9 @@
  (merge-with merge oz-config germany-dimensions
              {:title {:text "COVID19 cases in Germany, by state, per 100k inhabitants"}
               :data {:name "germany"
-                     :url "/public/data/deutschland-bundeslaender.geo.json",
+                     ;; FIXME this keeps getting cached somewhere in Firefox or Oz
+                     ;; :url "/public/data/deutschland-bundeslaender.geo.json",
+                     :values deutschland-geojson-with-data
                      :format {:property "features"}},
               :mark {:type "geoshape" :stroke "white" :strokeWidth 1}
               :encoding {:color {:field "Cases-per-100k",
