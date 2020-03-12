@@ -128,11 +128,12 @@
                                          viz/covid19-cases-csv)))))
 
 (defn date-cases-surpassed [country n]
-  "First date when `country` had greater than the given number of cases `n`."
+  "First date when `country` had greater than the given number of _population-scaled_ cases `n`."
   (->> (first (filter (comp #{country} second)
                       viz/covid19-cases-csv))
        (drop 4)
-       (map #(Integer/parseInt %))
+       (map (comp (fn [n] (/ n (get viz/country-populations country)))
+                  (fn [s] (Integer/parseInt s))))
        (zipmap (map (comp str viz/parse-covid19-date)
                     (drop 4 (first viz/covid19-cases-csv))))
        (sort-by val)
@@ -145,22 +146,24 @@
           ChronoUnit/DAYS))
 
 (comment
-  (->> (first (filter (comp #{"Italy"} second)
-                      viz/covid19-cases-csv))
-       (drop 4)
-       (map #(Integer/parseInt %))
-       (zipmap (map (comp str viz/parse-covid19-date)
-                    (drop 4 (first viz/covid19-cases-csv))))
-       (sort-by val))
 
-  (date-cases-surpassed "Italy" 10)
+  (date-cases-surpassed "Italy" (/ 10 (get viz/country-populations "Italy")))
   ;; "2020-02-21"
 
-  (days-between (date-cases-surpassed "Italy" (case-count-in "Germany"))
-                (str (parse-covid19-date (last (first viz/covid19-cases-csv)))))
-  ;; 9
+  (/ (case-count-in "Germany")
+     (get viz/country-populations "Germany"))
+  ;; 954/41463961
+
+  (/ (case-count-in "Italy")
+     (get viz/country-populations "Italy"))  
+  ;; 4154/20143761
+
+  (let [a "Germany"]
+    (days-between (date-cases-surpassed "Italy" (/ (case-count-in a)
+                                                   (get viz/country-populations a)))
+                  (str (viz/parse-covid19-date (last (first viz/covid19-cases-csv))))))
+  ;; 10  
   ;; Germany is trailing just over a week behind Italy, ceteris paribus
-
-  ;; FIXME this doesn't account for population
-
+  ;; (without population adjustmnet, it was 9)
+  
   )

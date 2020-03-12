@@ -326,4 +326,3 @@
                          ;; TODO tooltip for country
                          :color {:field "country", :type "nominal"}
                          :tooltip {:field "country", :type "nominal"}}}))
-
