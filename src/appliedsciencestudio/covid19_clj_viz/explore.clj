@@ -8,6 +8,7 @@
             [jsonista.core :as json]
             [oz.core :as oz])
   (:import [java.time LocalDate]
+           [java.time.temporal ChronoUnit]
            [java.time.format DateTimeFormatter]))
 
 ;;;; Another bar chart
@@ -116,3 +117,50 @@
                                         :symbolSize 800
                                         :labelFontSize 24}}
                        :row {:field "country" :type "nominal"}}}))
+
+
+;;;; Question: how long ago was X place where Y is now?
+;; e.g. X = Italy, Y = Germany means "how long until Germany looks like Italy today?"
+(defn case-count-in
+  "Last reported number of confirmd coronavirus cases in given `country`."
+  [country]
+  (Integer/parseInt (last (first (filter (comp #{country} second)
+                                         viz/covid19-cases-csv)))))
+
+(defn date-cases-surpassed [country n]
+  "First date when `country` had greater than the given number of cases `n`."
+  (->> (first (filter (comp #{country} second)
+                      viz/covid19-cases-csv))
+       (drop 4)
+       (map #(Integer/parseInt %))
+       (zipmap (map (comp str viz/parse-covid19-date)
+                    (drop 4 (first viz/covid19-cases-csv))))
+       (sort-by val)
+       (some (fn [[d c]] (when (> c n)
+                          d)))))
+
+(defn days-between [yyyy-mm-dd1 yyyy-mm-dd2]
+  (.until (LocalDate/parse yyyy-mm-dd1 (DateTimeFormatter/ofPattern "yyyy-MM-dd"))
+          (LocalDate/parse yyyy-mm-dd2 (DateTimeFormatter/ofPattern "yyyy-MM-dd"))
+          ChronoUnit/DAYS))
+
+(comment
+  (->> (first (filter (comp #{"Italy"} second)
+                      viz/covid19-cases-csv))
+       (drop 4)
+       (map #(Integer/parseInt %))
+       (zipmap (map (comp str viz/parse-covid19-date)
+                    (drop 4 (first viz/covid19-cases-csv))))
+       (sort-by val))
+
+  (date-cases-surpassed "Italy" 10)
+  ;; "2020-02-21"
+
+  (days-between (date-cases-surpassed "Italy" (case-count-in "Germany"))
+                (str (parse-covid19-date (last (first viz/covid19-cases-csv)))))
+  ;; 9
+  ;; Germany is trailing just over a week behind Italy, ceteris paribus
+
+  ;; FIXME this doesn't account for population
+
+  )
