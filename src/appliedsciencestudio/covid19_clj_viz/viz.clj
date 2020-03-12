@@ -179,8 +179,9 @@
 
   )
 
-(def european-populations
-  "From https://data.worldbank.org/indicator/SP.POP.TOTL"
+(def country-populations
+  "From https://data.worldbank.org/indicator/SP.POP.TOTL
+  NB: this dataset has some odd or crufty rows"
   (->> (csv/read-csv (slurp "resources/API_SP.POP.TOTL_DS2_en_csv_v2_821007.csv"))
        (drop 4) ;; first few rows are cruft
        (map (comp #(map string/trim %)
@@ -208,12 +209,16 @@
                                                       "Ukraine"}
                                                     first))
                                       (reduce (fn [acc [country current-cases]]
-                                                (conj acc {:country (if (= "UK" country)
-                                                                      "United Kingdom"
-                                                                      country)
-                                                           :cases (Integer/parseInt current-cases)
-                                                           :pop (get european-populations country)}))
-                                              []))},
+                                                (update acc country
+                                                        (fn [m] (merge-with + (select-keys m [:cases])
+                                                                           {:country (if (= "UK" country)
+                                                                                       "United Kingdom"
+                                                                                       country)
+                                                                            :cases (Integer/parseInt current-cases)
+                                                                            :pop (get country-populations country)}))))
+                                              {})
+                                      vals
+                                      (sort-by :cases))},
                   :mark {:type "bar" :color "#9085DA"}
                   :encoding {:x {:field "cases", :type "quantitative"}
                              :y {:field "country", :type "ordinal"
