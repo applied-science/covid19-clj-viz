@@ -17,12 +17,19 @@
 
 ;; from https://www.rki.de/DE/Content/InfAZ/N/Neuartiges_Coronavirus/Fallzahlen.html
 (def cases
-  (reduce (fn [acc [bundesland n]]
-            (assoc acc (get normalize-bundesland bundesland bundesland) (Integer/parseInt n)))
+  (reduce (fn [acc [bundesland n _]]
+            (assoc acc (get normalize-bundesland bundesland bundesland)
+                   (Integer/parseInt (string/replace (let [end (.indexOf n "(")]
+                                                       (if (pos? end)
+                                                         (subs n 0 (dec end))
+                                                         n))
+                                                     "." ""))))
           {}
-          (rest (csv/read-csv (slurp #_"resources/deutschland.covid19cases.06-11-2020.tsv"
-                                     "resources/deutschland.covid19cases.tsv")
-                              :separator \tab))))
+          (->> (csv/read-csv (slurp #_"resources/deutschland.covid19cases.06-11-2020.tsv"
+                                "resources/deutschland.covid19cases.tsv")
+                             :separator \tab)
+               (drop 3)
+               butlast)))
 
 ;; from https://en.m.wikipedia.org/wiki/List_of_German_states_by_population
 (def population
