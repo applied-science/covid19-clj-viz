@@ -20,7 +20,8 @@
   (reduce (fn [acc [bundesland n]]
             (assoc acc (get normalize-bundesland bundesland bundesland) (Integer/parseInt n)))
           {}
-          (rest (csv/read-csv (slurp "resources/deutschland.covid19cases.tsv")
+          (rest (csv/read-csv (slurp #_"resources/deutschland.covid19cases.06-11-2020.tsv"
+                                     "resources/deutschland.covid19cases.tsv")
                               :separator \tab))))
 
 ;; from https://en.m.wikipedia.org/wiki/List_of_German_states_by_population
