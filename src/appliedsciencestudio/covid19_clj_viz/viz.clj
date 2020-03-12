@@ -281,7 +281,9 @@
 (def corona-outside-china-data
   (->> covid19-cases-csv
        rest ; drop header
-       (remove (comp #{"Mainland China" "Others"} second))
+       (remove (comp #{"Mainland China" ;; "China"
+                       "Cruise Ship"
+                       "Others"} second))
        (group-by second)
        (map (fn [[k v]]
               [k (->> v
@@ -316,4 +318,33 @@
                          ;; TODO tooltip for country
                          :color {:field "country", :type "nominal"}
                          :tooltip {:field "country", :type "nominal"}}}))
+
+
+;;;; Back to choropleths for Berlin
+;; GeoJSON from https://github.com/funkeinteraktiv/Berlin-Geodaten/blob/master/berlin_bezirke.geojson
+(oz/view!
+ (merge-with merge oz-config
+             {:title {:text "COVID-19 in Berlin: Choropleth"}
+              :height 500 :width 600
+              :data {:values (update (json/read-value (java.io.File. "resources/public/public/data/berlin-original.geo.json")
+                                                      (json/object-mapper {:decode-key-fn true}))
+                                     :features
+                                     (fn [features]
+                                          (mapv (fn [{:keys [properties] :as feature}]
+                                                  (let [faelle (get-in deutschland/cases2 ["Berlin" (:name properties)] 0)
+                                                        bevoelkerung (get deutschland/population-berlin (:name properties))]
+                                                    (-> feature
+                                                        (assoc :bezirk          (:name properties))
+                                                        (assoc :faelle          (get-in deutschland/cases2 ["Berlin" (:name properties)] 0))
+                                                        (assoc :bevoelkerung    (get deutschland/population-berlin (:name properties)))
+                                                        (assoc :faelle-pro-100k (get-in deutschland/bezirk-data [(:name properties) :cases-per-100k])))))
+                                                features)))
+                     :format {:type "json" :property "features"}}
+              :mark {:type "geoshape" :stroke "white" :strokeWidth 1}
+              :encoding {:color {:field "faelle-pro-100k",
+                                 :type "quantitative"
+                                 :scale {:domain [0 (apply max (map :cases-per-100k (vals deutschland/bezirk-data)))]}}
+                         :tooltip [{:field "bezirk" :type "nominal"}
+                                   {:field "faelle" :type "quantitative"}]}
+             :selection {:highlight {:on "mouseover" :type "single"}}}))
 
