@@ -179,6 +179,7 @@
 
   )
 
+;; TODO standardize country names across various sources
 (def country-populations
   "From https://data.worldbank.org/indicator/SP.POP.TOTL
   NB: this dataset has some odd or crufty rows"

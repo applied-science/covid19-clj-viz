@@ -165,5 +165,17 @@
   ;; 10  
   ;; Germany is trailing just over a week behind Italy, ceteris paribus
   ;; (without population adjustmnet, it was 9)
+
+
+
+  (case-count-in "US")
+
+  (let [a "US"]
+    (days-between (date-cases-surpassed "Italy" (/ 50000 #_1629 #_(case-count-in a)
+                                                   (get viz/country-populations "United States")))
+                  (str (viz/parse-covid19-date (last (first viz/covid19-cases-csv))))))
+
+
+  ;; TODO rate of change for past few days
   
   )
