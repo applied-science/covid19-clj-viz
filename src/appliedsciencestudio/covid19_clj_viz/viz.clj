@@ -10,6 +10,12 @@
 
 (oz/start-server! 8082)
 
+(def applied-science-palette
+  {:pink   "#D46BC8"
+   :green  "#38D996"
+   :blue   "#4FADFF"
+   :purple "#9085DA"})
+
 (def deutschland-geojson-with-data
   (update (json/read-value (java.io.File. "resources/public/public/data/deutschland-bundeslaender-original.geo.json")
                            (json/object-mapper {:decode-key-fn true}))
