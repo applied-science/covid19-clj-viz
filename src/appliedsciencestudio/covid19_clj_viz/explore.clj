@@ -95,7 +95,8 @@
                     :font "IBM Plex Mono"
                     :fontSize 30
                     :anchor "middle"}
-            :width {:step 16}, :height 325
+            :width {:step 16}
+            :height 325
             :config {:view {:stroke "transparent"}}
             :data {:values (concat (compare-cases-in "Republic of Korea") ;; NB: prior to ~March 11, this was "South Korea"
                                    (compare-cases-in "Italy"))},
@@ -105,7 +106,7 @@
                            :axis {:title nil
                                   :labels false}}
                        :y {:field "cases", :type "quantitative"
-                           :scale {:domain [0 2000]}
+                           ;; :scale {:domain [0 2000]}
                            :axis {:title nil :grid false}},
                        :color {:field "type", :type "nominal"
                                :scale {:range ["#f3cd6a" "#de6a83" "#70bebf"]}
@@ -123,9 +124,14 @@
 ;; e.g. X = Italy, Y = Germany means "how long until Germany looks like Italy today?"
 (defn case-count-in
   "Last reported number of confirmd coronavirus cases in given `country`."
-  [country]
-  (Integer/parseInt (last (first (filter (comp #{country} second)
-                                         viz/covid19-cases-csv)))))
+  ;; FIXME doesn't work for countries with >1 province reporting
+  ([country]
+   (Integer/parseInt (last (first (filter (comp #{country} second)
+                                          viz/covid19-cases-csv)))))
+  ([country days-ago]
+   (Integer/parseInt (nth (reverse (first (filter (comp #{country} second)
+                                                  viz/covid19-cases-csv)))
+                          days-ago))))
 
 (defn date-cases-surpassed [country n]
   "First date when `country` had greater than the given number of _population-scaled_ cases `n`."
@@ -149,7 +155,7 @@
 
   (date-cases-surpassed "Italy" (/ 10 (get viz/country-populations "Italy")))
   ;; "2020-02-21"
-
+  
   (/ (case-count-in "Germany")
      (get viz/country-populations "Germany"))
   ;; 954/41463961
