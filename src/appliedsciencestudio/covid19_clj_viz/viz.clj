@@ -10,6 +10,13 @@
 
 (oz/start-server! 8082)
 
+;; Minimum viable geographic visualization
+(oz/view! {:data {:url "/public/data/deutschland-bundeslaender.geo.json"
+                  :format {:type "json"
+                           :property "features"}}
+           :mark "geoshape"})
+
+;; Now some setup for more interesting visualizations
 (def applied-science-palette
   {:pink   "#D46BC8"
    :green  "#38D996"
@@ -64,13 +71,8 @@
 
   )
 
-;; Minimum viable geographic visualization
-(oz/view! {:data {:url "/public/data/deutschland-bundeslaender.geo.json"
-                  :format {:type "json"
-                           :property "features"}}
-           :mark "geoshape"})
-
 (def oz-config
+  "Default settings for Oz visualizations"
   (let [font "IBM Plex Mono"]
     {:config {:style {:cell {:stroke "transparent"}}
               :legend {:labelFont font
@@ -87,7 +89,9 @@
 (def germany-dimensions
   {:width 550 :height 700})
 
-;; Geographic visualization of cases in each Germany state, shaded proportional to population
+
+;;;; ===========================================================================
+;;;; Geographic visualization of cases in each Germany state, shaded proportional to population
 (oz/view!
  (merge-with merge oz-config germany-dimensions
              {:title {:text "COVID19 cases in Germany, by state, per 100k inhabitants"}
@@ -106,9 +110,11 @@
                                    {:field "Cases" :type "quantitative"}]}
               :selection {:highlight {:on "mouseover" :type "single"}}}))
 
-;; Deceptive version of that same map
-;;   - red has emotional valence ["#fde5d9" "#a41e23"]
-;;   - we report cases without taking population into account
+
+;;;; ===========================================================================
+;;;; Deceptive version of that same map
+;;    - red has emotional valence ["#fde5d9" "#a41e23"]
+;;    - we report cases without taking population into account
 (oz/view! (merge oz-config germany-dimensions
                  {:title "COVID19 cases in Germany (*not* population-scaled)"
                   :data {:name "germany"
@@ -123,6 +129,8 @@
                                        {:field "Cases" :type "quantitative"}]}
                   :selection {:highlight {:on "mouseover" :type "single"}}}))
 
+
+;;;; ===========================================================================
 ;;;; Bar chart with German states, all of Germany, and Chinese provinces
 
 (def covid19-confirmed-csv
@@ -180,6 +188,7 @@
                                  :sort nil}}}))
 
 
+;;;; ===========================================================================
 ;;;; Evaluate comparative risk in Europe, to answer question from spouse
 
 (comment
@@ -207,7 +216,9 @@
                          (Long/parseLong (string/replace pop-s "," "")))]))
        (into {})))
 
-;; Bar chart of cases in Europe (scaled to World Bank population estimate)
+
+;;;; ===========================================================================
+;;;; Bar chart of cases in Europe (scaled to World Bank population estimate)
 (oz/view! (merge oz-config barchart-dimensions
                  {:title "COVID19 cases in European countries, per 100k inhabitants",
                   :data {:values (->> covid19-confirmed-csv
@@ -240,6 +251,8 @@
 (def china-dimensions
   {:width 570 :height 450})
 
+
+;;;; ===========================================================================
 ;;;; Useless China chloropleth
 (oz/view! (merge oz-config china-dimensions
                  {:data {:name "map"
@@ -251,6 +264,8 @@
                              :tooltip [{:field "province" :type "nominal"}
                                        {:field "cases" :type "quantitative"}]}}))
 
+
+;;;; ===========================================================================
 ;;;; Deceptive China map
 ;; As above, but:
 ;;  - binned, which varies the map
@@ -276,6 +291,8 @@
                                        {:field "cases" :type "quantitative"}
                                        {:field "cases-per-100k" :type "quantitative"}]}}))
 
+
+;;;; ===========================================================================
 ;;;; "Best we can do" China map
 ;; We return to the original color scheme, drop the binning and the
 ;; scary red color scheme, and (most importantly) use a log scale.
@@ -298,13 +315,14 @@
 ;; Beyond this we rely on charts.
 
 
+;;;; ===========================================================================
 ;;;; Total Cases of Coronavirus Outside of China
 ;; from Chart 9 https://medium.com/@tomaspueyo/coronavirus-act-today-or-people-will-die-f4d3d9cd99ca
 
 (def corona-outside-china-data
   (->> covid19-confirmed-csv
        rest ; drop header
-       (remove (comp #{"Mainland China" "Others"} second))
+       (remove (comp #{"Mainland China" "China" "Others"} second))
        (group-by second)
        (map (fn [[k v]]
               [k (->> v
