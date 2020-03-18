@@ -141,8 +141,7 @@
                       :font "IBM Plex Mono"
                       :fontSize 30
                       :anchor "middle"}
-              :width 500 ;;{:step 25}
-              :height 325
+              :width 500 :height 325
               :data {:values (let [country "Germany"] ;; FIXME change country here
                                (->> (new-daily-cases-in :confirmed country)
                                     (sort-by key)
@@ -167,14 +166,30 @@
 ;; e.g. X = Italy, Y = Germany means "how long until Germany looks like Italy today?"
 (defn case-count-in
   "Last reported number of confirmd coronavirus cases in given `country`."
-  ;; FIXME doesn't work for countries with >1 province reporting
   ([country]
-   (Integer/parseInt (last (first (filter (comp #{country} second)
-                                          viz/covid19-confirmed-csv)))))
+   (->> viz/covid19-confirmed-csv
+        (filter (comp #{country} second))
+        (map last)
+        (map #(Integer/parseInt %))
+        (reduce +)))
   ([country days-ago]
-   (Integer/parseInt (nth (reverse (first (filter (comp #{country} second)
-                                                  viz/covid19-confirmed-csv)))
-                          days-ago))))
+   (->> viz/covid19-confirmed-csv
+        (filter (comp #{country} second))
+        (map (comp #(nth % days-ago) reverse))
+        (map #(Integer/parseInt %))
+        (reduce +))))
+
+
+(comment
+
+  (case-count-in "Germany")
+
+  ;; test on a country with multiple provinces reporting
+  (= (case-count-in "Australia")
+     (case-count-in "Australia" 0))
+  
+  )
+
 
 (defn date-cases-surpassed [country n]
   "First date when `country` had greater than the given number of _population-scaled_ cases `n`."
