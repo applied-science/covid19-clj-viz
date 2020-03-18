@@ -137,7 +137,7 @@
 
 (oz/view!
  (merge-with merge oz-config
-             {:title {:text "Daily new COVID-19 cases in Germany"
+             {:title {:text "Daily new confirmed COVID-19 cases in Germany"
                       :font "IBM Plex Mono"
                       :fontSize 30
                       :anchor "middle"}
