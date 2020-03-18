@@ -125,7 +125,7 @@
 
 ;;;; Bar chart with German states, all of Germany, and Chinese provinces
 
-(def covid19-cases-csv
+(def covid19-confirmed-csv
   "From https://github.com/CSSEGISandData/COVID-19/tree/master/who_covid_19_situation_reports"
   (csv/read-csv (slurp "resources/COVID-19/csse_covid_19_data/csse_covid_19_time_series/time_series_19-covid-Confirmed.csv")))
 
@@ -143,12 +143,18 @@
 (def barchart-dimensions
   {:width 510 :height 800})
 
+(defn data-exists-for-country? [kind country]
+  (let [rows (case kind
+              :recovered covid19-recovered-csv
+              :deaths    covid19-deaths-csv
+              :confirmed covid19-confirmed-csv)]
+   (some (comp #{country} second) rows)))
 
 ;; Bar chart of the severity of the outbreak across regions in China and Germany
 ;; (with or without the outlier that is China's Hubei province)
 (oz/view! (merge oz-config barchart-dimensions
-                 {:title "COVID19 cases in China and Germany",
-                  :data {:values (->> covid19-cases-csv
+                 {:title "Confirmed COVID19 cases in China and Germany",
+                  :data {:values (->> covid19-confirmed-csv
                                       rest
                                       ;; grab only province/state, country, and latest report of total cases:
                                       (map (juxt first second last))
@@ -179,7 +185,7 @@
 (comment
 
   ;; let's take a quick look at country names in the case data
-  (->> covid19-cases-csv
+  (->> covid19-confirmed-csv
        (map second)
        distinct)
 
@@ -204,7 +210,7 @@
 ;; Bar chart of cases in Europe (scaled to World Bank population estimate)
 (oz/view! (merge oz-config barchart-dimensions
                  {:title "COVID19 cases in European countries, per 100k inhabitants",
-                  :data {:values (->> covid19-cases-csv
+                  :data {:values (->> covid19-confirmed-csv
                                       (map (juxt second last))
                                       (filter (comp #{"France" "Spain" "Germany"
                                                       "Sweden" "Italy" "Switzerland"
@@ -296,7 +302,7 @@
 ;; from Chart 9 https://medium.com/@tomaspueyo/coronavirus-act-today-or-people-will-die-f4d3d9cd99ca
 
 (def corona-outside-china-data
-  (->> covid19-cases-csv
+  (->> covid19-confirmed-csv
        rest ; drop header
        (remove (comp #{"Mainland China" "Others"} second))
        (group-by second)
@@ -307,7 +313,7 @@
                       (map (fn [cases-across-provinces]
                              (apply + (map #(Integer/parseInt %) cases-across-provinces))))
                       (zipmap (map (comp str parse-covid19-date)
-                                   (drop 4 (first covid19-cases-csv)))))]))
+                                   (drop 4 (first covid19-confirmed-csv)))))]))
        (reduce (fn [vega-values [country date->cases]]
                  (if (> 500 (apply max (vals date->cases))) ; ignore countries with fewer than X cases
                    vega-values
