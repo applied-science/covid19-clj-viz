@@ -17,6 +17,9 @@
 
 ;; from https://www.rki.de/DE/Content/InfAZ/N/Neuartiges_Coronavirus/Fallzahlen.html
 (def cases
+  ;; BUG the source data has changed formats
+  ;; FIXME this has caused us to lose data
+  ;; TODO adapt to new format
   (reduce (fn [acc [bundesland n _]]
             (assoc acc (get normalize-bundesland bundesland bundesland)
                    (Integer/parseInt (string/replace (let [end (.indexOf n "(")]

@@ -127,10 +127,10 @@
 
 (comment
   ;; last 10 days of new cases in Deutschland
-  (vals (take 10 (reverse (sort-by key (new-daily-cases-in :confirmed "Germany")))))
+  (vals (take 10 (sort-by key #(compare %2 %1) (new-daily-cases-in :confirmed "Germany"))))
   ;; (1477 1210 910 1597 170 451 281 136 241 129)
 
-  (vals (take 10 (reverse (sort-by key (new-daily-cases-in :confirmed "Italy")))))
+  (vals (take 10 (sort-by key #(compare %2 %1) (new-daily-cases-in :confirmed "Italy"))))
   ;; (3233 3590 3497 5198 0 2313 977 1797 1492 1247)
   
   )
@@ -144,8 +144,7 @@
               :width 500 :height 325
               :data {:values (let [country "Germany"] ;; FIXME change country here
                                (->> (new-daily-cases-in :confirmed country)
-                                    (sort-by key)
-                                    reverse
+                                    (sort-by key #(compare %2 %1))
                                     (take 20)
                                     vals
                                     (into [])
