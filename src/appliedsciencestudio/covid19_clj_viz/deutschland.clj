@@ -30,8 +30,7 @@
                                            "Erkr./ 100.000 Einw." :sick-per-100k-residents
                                            "Todesfälle" :deaths
                                            "Besonders betroffene Gebiete in Deutschland" :particularly-affected-areas}
-                          :guess-types? false}))
-)
+                          :guess-types? false})))
 
 (def population
   "Population of German states.
@@ -57,6 +56,4 @@
                     :cases-per-100k (double (/ cases (/ (population bundesland)
                                                         100000)))}))
           {}
-          cases))
-
-
+          (dissoc cases "Gesamt")))
