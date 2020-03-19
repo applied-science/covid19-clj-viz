@@ -29,11 +29,11 @@
           :features
           (fn [features]
             (mapv (fn [feature]
-                    (-> feature
-                        (assoc :Bundesland     (:NAME_1 (:properties feature)))
-                        (assoc :Cases          (get deutschland/cases (:NAME_1 (:properties feature)) 0))
-                        (assoc :Population     (get deutschland/population (get deutschland/normalize-bundesland (:NAME_1 (:properties feature)) (:NAME_1 (:properties feature)))))
-                        (assoc :Cases-per-100k (get-in deutschland/bundeslaender-data [(:NAME_1 (:properties feature)) :cases-per-100k] 0))))
+                    (assoc feature
+                           :Bundesland     (:NAME_1 (:properties feature))
+                           :Cases          (get deutschland/cases (:NAME_1 (:properties feature)) 0)
+                           :Population     (get deutschland/population (get deutschland/normalize-bundesland (:NAME_1 (:properties feature)) (:NAME_1 (:properties feature))))
+                           :Cases-per-100k (get-in deutschland/bundeslaender-data [(:NAME_1 (:properties feature)) :cases-per-100k] 0)))
                   features))))
 
 (comment
@@ -349,9 +349,9 @@
                                 (fn [features]
                                   (mapv (fn [feature]
                                           (let [cntry (:NAME (:properties feature))]
-                                            (-> feature
-                                                (assoc :country cntry)
-                                                (assoc :rate (jh/rate-as-of :confirmed cntry 1)))))
+                                            (assoc feature
+                                                   :country cntry
+                                                   :rate (jh/rate-as-of :confirmed cntry 1))))
                                         features))))))
 
   (jh/new-daily-cases-in :deaths "Andorra")
@@ -363,20 +363,14 @@
           (fn [features]
             (mapv (fn [feature]
                     (let [cntry (:NAME (:properties feature))]
-                      (-> feature
-                          (assoc :country cntry)
-                          ;; Because some countries (e.g. Germany) are
-                          ;; not testing people post-mortem, which
-                          ;; drastically reduces their reported
-                          ;; deaths, I chose to calculate only
-                          ;; confirmed cases.
-                          (assoc :confirmed-rate
-                                 (case cntry
-                                   "Andorra" 0
-                                   "Iceland" 0
-                                   "Luxembourg" 0
-                                   "Liechtenstein" 0
-                                   (jh/rate-as-of :confirmed cntry 1))))))
+                      (assoc feature
+                             :country cntry
+                             ;; Because some countries (e.g. Germany) are
+                             ;; not testing people post-mortem, which
+                             ;; drastically reduces their reported
+                             ;; deaths, I chose to calculate only
+                             ;; confirmed cases.
+                             :confirmed-rate (jh/rate-as-of :confirmed cntry 7))))
                   features))))
 
 (oz/view!
