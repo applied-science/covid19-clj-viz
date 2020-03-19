@@ -370,24 +370,30 @@
                              ;; drastically reduces their reported
                              ;; deaths, I chose to calculate only
                              ;; confirmed cases.
-                             :confirmed-rate (jh/rate-as-of :confirmed cntry 7))))
+                             :confirmed-rate (jh/rate-as-of :confirmed cntry 1))))
                   features))))
+
+(comment
+  ;; Let's look at the rate of change data
+  (sort-by second (map (juxt :country :confirmed-rate) (:features europe-infection-datapoints)))
+
+  )
 
 (oz/view!
  (merge-with merge oz-config europe-dimensions
-             (let [field "confirmed-rate" #_"deaths-rate" #_ "recovered-rate"]
-               {:title {:text "COVID19 in Europe: Rate of Infection (population-scaled)"}
-                :data {:values europe-infection-datapoints
-                       :format {:type "json" :property "features"}}
-                :mark {:type "geoshape" :stroke "white" :strokeWidth 1}
-                :encoding {:color {:field field :type "quantitative"
-                                   :scale {:domain [0 (->> (map (keyword field) (:features europe-infection-datapoints))
-                                                           (remove (comp #{"Andorra" "Iceland" "Luxembourg"
-                                                                           "Liechtenstein"} :country))
-                                                           (apply max))]
-                                           :range ["#f6f6f6"
-                                                   (:blue applied-science-palette)
-                                                   (:green applied-science-palette)]}}
-                           :tooltip [{:field "country" :type "nominal"}
-                                     {:field field :type "quantitative"}]}
-                :selection {:highlight {:on "mouseover" :type "single"}}})))
+             {:title {:text "COVID19 in Europe: Rate of Infection Increase"}
+              :data {:values europe-infection-datapoints
+                     :format {:type "json" :property "features"}}
+              :mark {:type "geoshape" :stroke "white" :strokeWidth 1}
+              :encoding {:color {:field "confirmed-rate" :type "quantitative"
+                                 :scale {:domain [0 (->> (:features europe-infection-datapoints)
+                                                         ;; Nix the outlier TODO automate this
+                                                         (remove (comp #{"Andorra"} :country))
+                                                         (map :confirmed-rate)
+                                                         (apply max))]
+                                         :range [;;"#f6f6f6"
+                                                 (:blue applied-science-palette)
+                                                 (:green applied-science-palette)]}}
+                         :tooltip [{:field "country" :type "nominal"}
+                                   {:field "confirmed-rate" :type "quantitative"}]}
+              :selection {:highlight {:on "mouseover" :type "single"}}}))

@@ -74,8 +74,9 @@
   
   )
 
-
-(defn rate-as-of [kind country days]
+(defn rate-as-of
+  "Day-to-day COVID-19 case increase."
+  [kind country days]
   (assert (#{:recovered :deaths :confirmed} kind))
   (let [country (get world-bank/normalize-country
                      country country)]
@@ -84,13 +85,11 @@
                    :recovered covid19-recovered-csv
                    :deaths    covid19-deaths-csv
                    :confirmed covid19-confirmed-csv)
-            population (or (get world-bank/country-populations country)
-                           Integer/MAX_VALUE)
-            row (map (fn [n] (/ n population))
-                     (country-totals country rows))]
-        (double (/ (- (last row)
-                      (nth row (- (count row) (inc days))))
-                   days)))
+            row (partition 2 1 (country-totals country rows))
+            [a b] (nth row (- (count row) (inc days)))]
+        (if (zero? a)
+          0
+          (double (/ b a))))
       0)))
 
 (comment
@@ -99,15 +98,13 @@
   ;; (0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
   ;; 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 2 2 3 3 7 9 11 17 24)
 
-
   (country-totals "Germany" covid19-confirmed-csv)
   ;; (0 0 0 0 0 1 4 4 4 5 8 10 12 12 12 12 13 13 14 14 16 16 16 16 16
   ;; 16 16 16 16 16 16 16 16 16 17 27 46 48 79 130 159 196 262 482 670
-  ;; 799 1040 1176 1457 1908 2078 3675 4585 5795 7272 9257)
-
+  ;; 799 1040 1176 1457 1908 2078 3675 4585 5795 7272 9257)  
+  
   (map (partial rate-as-of :confirmed "Germany")
        [1 2 3 5 10 20 30])
-  ;; (1985.0 1731.0 1557.333333333333 1435.8 845.8 461.5 308.0333333333333)
-
+  ;; (1.272964796479648 1.254874892148404 1.263904034896401 1.768527430221367 1.30162703379224 1.703703703703704 1.0)
   
   )
