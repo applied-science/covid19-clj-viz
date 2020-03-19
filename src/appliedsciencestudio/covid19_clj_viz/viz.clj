@@ -1,12 +1,12 @@
 (ns appliedsciencestudio.covid19-clj-viz.viz
   (:require [appliedsciencestudio.covid19-clj-viz.china :as china]
             [appliedsciencestudio.covid19-clj-viz.deutschland :as deutschland]
+            [appliedsciencestudio.covid19-clj-viz.johns-hopkins :as jh]
+            [appliedsciencestudio.covid19-clj-viz.world-bank :as world-bank]
             [clojure.data.csv :as csv]
             [clojure.string :as string]
             [jsonista.core :as json]
-            [oz.core :as oz])
-  (:import [java.time LocalDate]
-           [java.time.format DateTimeFormatter]))
+            [oz.core :as oz]))
 
 (oz/start-server! 8082)
 
@@ -133,36 +133,14 @@
 ;;;; ===========================================================================
 ;;;; Bar chart with German states, all of Germany, and Chinese provinces
 
-(def covid19-confirmed-csv
-  "From https://github.com/CSSEGISandData/COVID-19/tree/master/who_covid_19_situation_reports"
-  (csv/read-csv (slurp "resources/COVID-19/csse_covid_19_data/csse_covid_19_time_series/time_series_19-covid-Confirmed.csv")))
-
-(def covid19-recovered-csv
-  "From https://github.com/CSSEGISandData/COVID-19/tree/master/who_covid_19_situation_reports"
-  (csv/read-csv (slurp "resources/COVID-19/csse_covid_19_data/csse_covid_19_time_series/time_series_19-covid-Recovered.csv")))
-
-(def covid19-deaths-csv
-  "From https://github.com/CSSEGISandData/COVID-19/tree/master/who_covid_19_situation_reports"
-  (csv/read-csv (slurp "resources/COVID-19/csse_covid_19_data/csse_covid_19_time_series/time_series_19-covid-Deaths.csv")))
-
-(defn parse-covid19-date [mm-dd-yy]
-  (LocalDate/parse mm-dd-yy (DateTimeFormatter/ofPattern "M/d/yy")))
-
 (def barchart-dimensions
   {:width 510 :height 800})
-
-(defn data-exists-for-country? [kind country]
-  (let [rows (case kind
-              :recovered covid19-recovered-csv
-              :deaths    covid19-deaths-csv
-              :confirmed covid19-confirmed-csv)]
-   (some (comp #{country} second) rows)))
 
 ;; Bar chart of the severity of the outbreak across regions in China and Germany
 ;; (with or without the outlier that is China's Hubei province)
 (oz/view! (merge oz-config barchart-dimensions
                  {:title "Confirmed COVID19 cases in China and Germany",
-                  :data {:values (->> covid19-confirmed-csv
+                  :data {:values (->> jh/covid19-confirmed-csv
                                       rest
                                       ;; grab only province/state, country, and latest report of total cases:
                                       (map (juxt first second last))
@@ -194,34 +172,18 @@
 (comment
 
   ;; let's take a quick look at country names in the case data
-  (->> covid19-confirmed-csv
+  (->> jh/covid19-confirmed-csv
        (map second)
        distinct)
 
   )
-
-;; TODO standardize country names across various sources
-(def country-populations
-  "From https://data.worldbank.org/indicator/SP.POP.TOTL
-  NB: this dataset has some odd or crufty rows"
-  (->> (csv/read-csv (slurp "resources/API_SP.POP.TOTL_DS2_en_csv_v2_821007.csv"))
-       (drop 4) ;; first few rows are cruft
-       (map (comp #(map string/trim %)
-                  ;; country name is first column;
-                  ;; 2018 data is third-to-last column
-                  (juxt first (comp last butlast butlast))))
-       (map (fn [[country pop-s]]
-              [country (if (string/blank? pop-s)
-                         0 ;; (Eritrea and "Not classified" have incomplete data)
-                         (Long/parseLong (string/replace pop-s "," "")))]))
-       (into {})))
 
 
 ;;;; ===========================================================================
 ;;;; Bar chart of cases in Europe (scaled to World Bank population estimate)
 (oz/view! (merge oz-config barchart-dimensions
                  {:title "COVID19 cases in European countries, per 100k inhabitants",
-                  :data {:values (->> covid19-confirmed-csv
+                  :data {:values (->> jh/covid19-confirmed-csv
                                       (map (juxt second last))
                                       (filter (comp #{"France" "Spain" "Germany"
                                                       "Sweden" "Italy" "Switzerland"
@@ -239,7 +201,7 @@
                                                                                        "United Kingdom"
                                                                                        country)
                                                                             :cases (Integer/parseInt current-cases)
-                                                                            :pop (get country-populations country)}))))
+                                                                            :pop (get world-bank/country-populations country)}))))
                                               {})
                                       vals
                                       (sort-by :cases))},
@@ -320,7 +282,7 @@
 ;; from Chart 9 https://medium.com/@tomaspueyo/coronavirus-act-today-or-people-will-die-f4d3d9cd99ca
 
 (def corona-outside-china-data
-  (->> covid19-confirmed-csv
+  (->> jh/covid19-confirmed-csv
        rest ; drop header
        (remove (comp #{"Mainland China" "China" "Others"} second))
        (group-by second)
@@ -330,8 +292,8 @@
                       (drop 4) ; drop province, country, lat, long
                       (map (fn [cases-across-provinces]
                              (apply + (map #(Integer/parseInt %) cases-across-provinces))))
-                      (zipmap (map (comp str parse-covid19-date)
-                                   (drop 4 (first covid19-confirmed-csv)))))]))
+                      (zipmap (map (comp str jh/parse-covid19-date)
+                                   (drop 4 (first jh/covid19-confirmed-csv)))))]))
        (reduce (fn [vega-values [country date->cases]]
                  (if (> 500 (apply max (vals date->cases))) ; ignore countries with fewer than X cases
                    vega-values
@@ -357,3 +319,81 @@
                          ;; TODO tooltip for country
                          :color {:field "country", :type "nominal"}
                          :tooltip {:field "country", :type "nominal"}}}))
+
+
+;;;; ===========================================================================
+;;;; Choropleth: European countries' COVID19 rate of infection
+;; geojson from https://github.com/leakyMirror/map-of-europe/blob/master/GeoJSON/europe.geojson
+
+(def europe-dimensions
+  {:width 750 :height 750})
+
+(def europe-geojson
+  (json/read-value (java.io.File. "resources/public/public/data/europe.geo.json")
+                   (json/object-mapper {:decode-key-fn true})))
+
+(comment
+  ;; Which countries are in this geoJSON?
+  (map :NAME (map :properties (:features europe-geojson)))
+  ;; ("Azerbaijan" "Albania" "Armenia" "Bosnia and Herzegovina" "Bulgaria" "Cyprus" "Denmark" "Ireland" "Estonia" "Austria" "Czech Republic" "Finland" "France" "Georgia" "Germany" "Greece" "Croatia" "Hungary" "Iceland" "Israel" "Italy" "Latvia" "Belarus" "Lithuania" "Slovakia" "Liechtenstein" "The former Yugoslav Republic of Macedonia" "Malta" "Belgium" "Faroe Islands" "Andorra" "Luxembourg" "Monaco" "Montenegro" "Netherlands" "Norway" "Poland" "Portugal" "Romania" "Republic of Moldova" "Slovenia" "Spain" "Sweden" "Switzerland" "Turkey" "United Kingdom" "Ukraine" "San Marino" "Serbia" "Holy See (Vatican City)" "Russia")
+
+  (clojure.set/difference (set (map (comp #(get world-bank/normalize-country % %) :NAME)
+                                    (map :properties (:features europe-geojson))))
+                          jh/countries)
+
+  ;; What outliers are making the map less useful?
+  (sort-by second (map (juxt (comp :NAME :properties) :rate)
+                       (:features
+                        (update europe-geojson
+                                :features
+                                (fn [features]
+                                  (mapv (fn [feature]
+                                          (let [cntry (:NAME (:properties feature))]
+                                            (-> feature
+                                                (assoc :country cntry)
+                                                (assoc :rate (jh/rate-as-of :confirmed cntry 1)))))
+                                        features))))))
+
+  (jh/new-daily-cases-in :deaths "Andorra")
+
+  )
+
+(def europe-infection-datapoints
+  (update europe-geojson :features
+          (fn [features]
+            (mapv (fn [feature]
+                    (let [cntry (:NAME (:properties feature))]
+                      (-> feature
+                          (assoc :country cntry)
+                          ;; Because some countries (e.g. Germany) are
+                          ;; not testing people post-mortem, which
+                          ;; drastically reduces their reported
+                          ;; deaths, I chose to calculate only
+                          ;; confirmed cases.
+                          (assoc :confirmed-rate
+                                 (case cntry
+                                   "Andorra" 0
+                                   "Iceland" 0
+                                   "Luxembourg" 0
+                                   "Liechtenstein" 0
+                                   (jh/rate-as-of :confirmed cntry 1))))))
+                  features))))
+
+(oz/view!
+ (merge-with merge oz-config europe-dimensions
+             (let [field "confirmed-rate" #_"deaths-rate" #_ "recovered-rate"]
+               {:title {:text "COVID19 in Europe: Rate of Infection (population-scaled)"}
+                :data {:values europe-infection-datapoints
+                       :format {:type "json" :property "features"}}
+                :mark {:type "geoshape" :stroke "white" :strokeWidth 1}
+                :encoding {:color {:field field :type "quantitative"
+                                   :scale {:domain [0 (->> (map (keyword field) (:features europe-infection-datapoints))
+                                                           (remove (comp #{"Andorra" "Iceland" "Luxembourg"
+                                                                           "Liechtenstein"} :country))
+                                                           (apply max))]
+                                           :range ["#f6f6f6"
+                                                   (:blue applied-science-palette)
+                                                   (:green applied-science-palette)]}}
+                           :tooltip [{:field "country" :type "nominal"}
+                                     {:field field :type "quantitative"}]}
+                :selection {:highlight {:on "mouseover" :type "single"}}})))

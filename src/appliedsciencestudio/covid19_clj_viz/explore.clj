@@ -1,6 +1,7 @@
 (ns appliedsciencestudio.covid19-clj-viz.explore
   (:require [appliedsciencestudio.covid19-clj-viz.china :as china]
             [appliedsciencestudio.covid19-clj-viz.deutschland :as deutschland]
+            [appliedsciencestudio.covid19-clj-viz.johns-hopkins :as jh]
             [appliedsciencestudio.covid19-clj-viz.viz :as viz :refer [oz-config
                                                                       barchart-dimensions]]
             [clojure.data.csv :as csv]
@@ -15,7 +16,7 @@
 ;; ...sorted and with some rearranging around `province/country`
 (oz/view! (merge oz-config barchart-dimensions
                  {:title "COVID19 cases in selected countries",
-                  :data {:values (->> viz/covid19-confirmed-csv
+                  :data {:values (->> jh/covid19-confirmed-csv
                                       rest
                                       ;; grab only province/state, country, and latest report of total cases:
                                       (map (juxt first second last))
@@ -37,38 +38,9 @@
 
 ;;;; Cases over time
 
-(defn new-daily-cases-in [kind country]
-  (assert (#{:recovered :deaths :confirmed} kind))
-  (assert (viz/data-exists-for-country? kind country))
-  (let [rows (case kind
-               :recovered viz/covid19-recovered-csv
-               :deaths    viz/covid19-deaths-csv
-               :confirmed viz/covid19-confirmed-csv)]
-    (->> rows
-         rest
-         (filter (comp #{country} second))
-                  (map #(drop 4 %))
-         (map #(map (fn [n] (Integer/parseInt n)) %))
-         (apply map +)
-         (partition 2 1)
-         (reduce (fn [acc [n-yesterday n-today]]
-                   (conj acc (max 0 (- n-today n-yesterday))))
-                 [])
-         (zipmap (map (comp str viz/parse-covid19-date)
-                      (drop 5 (first rows))))
-         (sort-by val))))
-
-(comment
-  (new-daily-cases-in :confirmed "Korea, South")
-
-  ;; test a country with province-level data
-  (new-daily-cases-in :confirmed "Australia")
-  
-  )
-
 (defn compare-cases-in [c]
   (->> c
-       (new-daily-cases-in :recovered)
+       (jh/new-daily-cases-in :recovered)
        (map (fn [[date recovered]]
               {:date date
                :cases recovered
@@ -79,13 +51,13 @@
                        :cases cases
                        :type "cases"
                        :country c})
-                    (new-daily-cases-in :confirmed c))
+                    (jh/new-daily-cases-in :confirmed c))
                (map (fn [[date deaths]]
                       {:date date
                        :cases deaths
                        :type "deaths"
                        :country c})
-                    (new-daily-cases-in :deaths c)))
+                    (jh/new-daily-cases-in :deaths c)))
        ;; only since 15 February
        (filter (comp (fn [d] (or (and (= 2 (Integer/parseInt (subs d 5 7)))
                                      (<= 15 (Integer/parseInt (subs d 8 10))))
@@ -127,10 +99,10 @@
 
 (comment
   ;; last 10 days of new cases in Deutschland
-  (vals (take 10 (sort-by key #(compare %2 %1) (new-daily-cases-in :confirmed "Germany"))))
+  (vals (take 10 (sort-by key #(compare %2 %1) (jh/new-daily-cases-in :confirmed "Germany"))))
   ;; (1477 1210 910 1597 170 451 281 136 241 129)
 
-  (vals (take 10 (sort-by key #(compare %2 %1) (new-daily-cases-in :confirmed "Italy"))))
+  (vals (take 10 (sort-by key #(compare %2 %1) (jh/new-daily-cases-in :confirmed "Italy"))))
   ;; (3233 3590 3497 5198 0 2313 977 1797 1492 1247)
   
   )
@@ -143,7 +115,7 @@
                       :anchor "middle"}
               :width 500 :height 325
               :data {:values (let [country "Germany"] ;; FIXME change country here
-                               (->> (new-daily-cases-in :confirmed country)
+                               (->> (jh/new-daily-cases-in :confirmed country)
                                     (sort-by key #(compare %2 %1))
                                     (take 20)
                                     vals
@@ -166,13 +138,13 @@
 (defn case-count-in
   "Last reported number of confirmd coronavirus cases in given `country`."
   ([country]
-   (->> viz/covid19-confirmed-csv
+   (->> jh/covid19-confirmed-csv
         (filter (comp #{country} second))
         (map last)
         (map #(Integer/parseInt %))
         (reduce +)))
   ([country days-ago]
-   (->> viz/covid19-confirmed-csv
+   (->> jh/covid19-confirmed-csv
         (filter (comp #{country} second))
         (map (comp #(nth % days-ago) reverse))
         (map #(Integer/parseInt %))
@@ -193,12 +165,12 @@
 (defn date-cases-surpassed [country n]
   "First date when `country` had greater than the given number of _population-scaled_ cases `n`."
   (->> (first (filter (comp #{country} second)
-                      viz/covid19-confirmed-csv))
+                      jh/covid19-confirmed-csv))
        (drop 4)
        (map (comp (fn [n] (/ n (get viz/country-populations country)))
                   (fn [s] (Integer/parseInt s))))
-       (zipmap (map (comp str viz/parse-covid19-date)
-                    (drop 4 (first viz/covid19-confirmed-csv))))
+       (zipmap (map (comp str jh/parse-covid19-date)
+                    (drop 4 (first jh/covid19-confirmed-csv))))
        (sort-by val)
        (some (fn [[d c]] (when (> c n)
                           d)))))
@@ -224,7 +196,7 @@
   (let [a "Germany"]
     (days-between (date-cases-surpassed "Italy" (/ (case-count-in a)
                                                    (get viz/country-populations a)))
-                  (str (viz/parse-covid19-date (last (first viz/covid19-confirmed-csv))))))
+                  (str (jh/parse-covid19-date (last (first jh/covid19-confirmed-csv))))))
   ;; 10  
   ;; Germany is trailing just over a week behind Italy, ceteris paribus
   ;; (without population adjustmnet, it was 9)
@@ -236,7 +208,7 @@
   (let [a "US"]
     (days-between (date-cases-surpassed "Italy" (/ 50000 #_1629 #_(case-count-in a)
                                                    (get viz/country-populations "United States")))
-                  (str (viz/parse-covid19-date (last (first viz/covid19-confirmed-csv))))))
+                  (str (jh/parse-covid19-date (last (first jh/covid19-confirmed-csv))))))
 
 
   ;; TODO rate of change for past few days
