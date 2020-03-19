@@ -1,5 +1,6 @@
 (ns appliedsciencestudio.covid19-clj-viz.deutschland
   (:require [clojure.data.csv :as csv]
+            [meta-csv.core :as mcsv]
             [clojure.string :as string]))
 
 (def normalize-bundesland
@@ -15,27 +16,26 @@
    "Schleswig Holstein" "Schleswig-Holstein"
    "Thuringia" "Thüringen"})
 
-;; from https://www.rki.de/DE/Content/InfAZ/N/Neuartiges_Coronavirus/Fallzahlen.html
 (def cases
-  ;; BUG the source data has changed formats
-  ;; FIXME this has caused us to lose data
-  ;; TODO adapt to new format
-  (reduce (fn [acc [bundesland n _]]
-            (assoc acc (get normalize-bundesland bundesland bundesland)
-                   (Integer/parseInt (string/replace (let [end (.indexOf n "(")]
-                                                       (if (pos? end)
-                                                         (subs n 0 (dec end))
-                                                         n))
-                                                     "." ""))))
+  "Number of confirmed COVID-19 cases by German province (auf Deutsch).
+  Source: Robert Koch Institute https://www.rki.de/DE/Content/InfAZ/N/Neuartiges_Coronavirus/Fallzahlen.html"
+  (reduce (fn [acc m]
+            (assoc acc (get normalize-bundesland (:bundesland m) (:bundesland m))
+                   (Integer/parseInt (string/replace (:count m) "." ""))))
           {}
-          (->> (csv/read-csv (slurp #_"resources/deutschland.covid19cases.06-11-2020.tsv"
-                                "resources/deutschland.covid19cases.tsv")
-                             :separator \tab)
-               (drop 3)
-               butlast)))
+          (mcsv/read-csv "resources/deutschland.covid19cases.tsv"
+                         {:field-names-fn {"Bundesland" :bundesland
+                                           "Anzahl" :count
+                                           "Differenz zum Vortag" :difference-carried-forward
+                                           "Erkr./ 100.000 Einw." :sick-per-100k-residents
+                                           "Todesfälle" :deaths
+                                           "Besonders betroffene Gebiete in Deutschland" :particularly-affected-areas}
+                          :guess-types? false}))
+)
 
-;; from https://en.m.wikipedia.org/wiki/List_of_German_states_by_population
 (def population
+  "Population of German states.
+  Source: Wikipedia https://en.m.wikipedia.org/wiki/List_of_German_states_by_population"
   (->> (csv/read-csv (slurp (str "resources/deutschland.state-population.tsv"))
                      :separator \tab)
        rest ;; drop the column header line
