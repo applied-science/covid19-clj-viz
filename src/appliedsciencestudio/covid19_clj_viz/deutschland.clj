@@ -1,6 +1,5 @@
 (ns appliedsciencestudio.covid19-clj-viz.deutschland
-  (:require [clojure.data.csv :as csv]
-            [meta-csv.core :as mcsv]
+  (:require [meta-csv.core :as mcsv]
             [clojure.string :as string]))
 
 (def normalize-bundesland
@@ -35,15 +34,19 @@
 (def population
   "Population of German states.
   Source: Wikipedia https://en.m.wikipedia.org/wiki/List_of_German_states_by_population"
-  (->> (csv/read-csv (slurp (str "resources/deutschland.state-population.tsv"))
-                     :separator \tab)
-       rest ;; drop the column header line
-       (map (juxt first last)) ;; only take the name of the state and 2018 population data:
-       (map #(mapv string/trim %)) 
-       (map (fn [[state pop-s]]
-              [(get normalize-bundesland state state)
-               (Integer/parseInt (string/replace pop-s "," ""))]))
-       (into {})))
+  (reduce (fn [m {:keys [state latest-population]}]
+            (assoc m state latest-population))
+          {}
+          (mcsv/read-csv "resources/deutschland.state-population.tsv"
+                         {:header? true
+                          :fields [{:field :state
+                                    :postprocess-fn #(get normalize-bundesland % %)}
+                                   nil nil nil nil nil nil nil
+                                   {:field :latest-population
+                                    :type :int
+                                    :preprocess-fn (fn [^String s] (-> s
+                                                                      string/trim
+                                                                      (string/replace "," "")))}]})))
 
 (def bundeslaender-data
   "Map from bundesland to population, cases, and cases-per-100k persons."
