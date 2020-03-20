@@ -1,6 +1,6 @@
 (ns appliedsciencestudio.covid19-clj-viz.deutschland
-  (:require [meta-csv.core :as mcsv]
-            [clojure.string :as string]))
+  (:require [clojure.string :as string]
+            [meta-csv.core :as mcsv]))
 
 (def normalize-bundesland
   "Mappings to normalize English/German and typographic variation to standard German spelling.
