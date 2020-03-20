@@ -1,6 +1,6 @@
 (ns appliedsciencestudio.covid19-clj-viz.deutschland
-  (:require [meta-csv.core :as mcsv]
-            [clojure.string :as string]))
+  (:require [clojure.string :as string]
+            [meta-csv.core :as mcsv]))
 
 (def normalize-bundesland
   "Mappings to normalize English/German and typographic variation to standard German spelling.
@@ -60,3 +60,85 @@
                                                         100000)))}))
           {}
           (dissoc cases "Gesamt")))
+
+;;;; ===========================================================================
+;;;; Let's use a new data source: https://www.citypopulation.de/en/germany/covid/
+
+;; What caveats does it have?  --> "The case numbers differ from RKI
+;; figures because official state information was used. Becauce these
+;; numbers refer to different time of day, the comparability between
+;; states is slightly reduced. Last Update: 2020-03-19 20:25."
+
+(comment
+  ;;;; Parse TSV
+  
+  ;; The orthodox Clojure approach is `clojure.data.csv`.
+  (clojure.data.csv/read-csv (slurp "resources/deutschland-covid19.citypop.tsv")
+                             :separator \tab)
+  
+  ;; This gives us a seq of vectors.
+
+  ;; What we usually want is a seq of maps.
+  ;; Per its README, which documents several important idioms:
+  (defn csv-data->maps [csv-data]
+    (map zipmap
+         (->> (first csv-data) ;; First row is the header
+              (map keyword) ;; Drop if you want string keys instead
+              repeat)
+	     (rest csv-data)))
+
+  (take 5 (csv-data->maps (clojure.data.csv/read-csv (slurp "resources/deutschland-covid19.citypop.tsv")
+                                              :separator \tab)))
+
+
+  ;; `Clojure.data.csv` is solid, but I prefer Nils Grunwald's `meta-csv`:
+  (take 3 (mcsv/read-csv "resources/deutschland-covid19.citypop.tsv"))
+
+  )
+
+
+(def hm-cases-csv
+  "COVID-19 cases according to health ministries of German states."
+  (mcsv/read-csv "resources/deutschland-covid19.citypop.tsv"
+                 {:null #{"..."}
+                  :fields [:name :status
+                           "2020-02-29" "2020-03-04" "2020-03-08"
+                           "2020-03-12" "2020-03-16" "2020-03-19"]}))
+
+(comment
+  ;;;; More looking
+  (distinct (map :status hm-cases-csv))
+
+  
+  ;; Does it conform to my naming scheme?
+  (set (distinct (map :name (filter (comp #{"State"} :status)
+                                    hm-cases-csv))))
+
+  
+  ;; Here I realized the CSV is "divided" by state rows:
+  (group-by :status hm-cases-csv)
+  
+  ;; We must be careful to preserve that information.
+  )
+
+(def hm-cases
+  (reduce (fn [acc m]
+            (case (:status m)
+              ("County" "County-level City" "Region")
+              (conj acc (assoc m :state (:state (last acc))))              
+              ("State" "Federal Republic")
+              (conj acc (assoc m :state (:name m)))))
+          []
+          hm-cases-csv))
+
+
+(comment
+  
+  ;; I want to know more about Brandenburg, the state that surrounds but excludes Berlin.
+  (->> (get (group-by :state hm-cases) "Brandenburg")
+       (remove (comp #{"State"} :status))
+       (map (fn [m] {(:name m) (get m "2020-03-19")}))
+       (apply merge)
+       (sort-by val >))  
+
+  )
