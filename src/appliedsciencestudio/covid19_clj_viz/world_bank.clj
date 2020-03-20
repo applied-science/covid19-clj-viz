@@ -1,6 +1,5 @@
 (ns appliedsciencestudio.covid19-clj-viz.world-bank
-  (:require [clojure.data.csv :as csv]
-            [clojure.string :as string]))
+  (:require [meta-csv.core :as mcsv]))
 
 (def normalize-country
   "Mappings to normalize naming & typographic variation to a single standard."
@@ -11,18 +10,18 @@
    ;; "Holy See (Vatican City)"
    "Czech Republic" "Czechia"})
 
-;; TODO standardize country names across various sources
 (def country-populations
   "From https://data.worldbank.org/indicator/SP.POP.TOTL
   NB: this dataset has some odd or crufty rows"
-  (->> (csv/read-csv (slurp "resources/API_SP.POP.TOTL_DS2_en_csv_v2_821007.csv"))
-       (drop 4) ;; first few rows are cruft
-       (map (comp #(map string/trim %)
-                  ;; country name is first column;
-                  ;; 2018 data is third-to-last column
-                  (juxt first (comp last butlast butlast))))
-       (map (fn [[country pop-s]]
-              [country (if (string/blank? pop-s)
-                         0 ;; (Eritrea and "Not classified" have incomplete data)
-                         (Long/parseLong (string/replace pop-s "," "")))]))
-       (into {})))
+  (->> (mcsv/read-csv "resources/API_SP.POP.TOTL_DS2_en_csv_v2_821007.csv"
+                      {:skip 5 :fields (concat [:country-name :country-code nil nil]
+                                               (map (fn [n] {:field (str n)
+                                                            :type :long})
+                                                    (range 1960 2020))
+                                               [nil])})
+       (remove (comp #{"Not classified"} :country-name))
+       (reduce (fn [m {:keys [country-name] :as row}]
+                 (assoc m (get normalize-country country-name country-name)
+                        ;; use the most recent non-null population value
+                        (some #(get row (str %)) (range 2019 1959 -1))))
+               {})))
