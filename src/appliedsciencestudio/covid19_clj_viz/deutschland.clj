@@ -126,8 +126,11 @@
             (case (:status m)
               ("County" "County-level City" "Region")
               (conj acc (assoc m :state (:state (last acc))))              
-              ("State" "Federal Republic")
-              (conj acc (assoc m :state (:name m)))))
+              "State"
+              (conj acc (assoc m :state (:name m)))
+
+              "Federal Republic"
+              (conj acc m)))
           []
           hm-cases-csv))
 
@@ -135,10 +138,12 @@
 (comment
   
   ;; I want to know more about Brandenburg, the state that surrounds but excludes Berlin.
-  (->> (get (group-by :state hm-cases) "Brandenburg")
+  (->> hm-cases
+       (filter (comp #{"Brandenburg"} :state))
        (remove (comp #{"State"} :status))
        (map (fn [m] {(:name m) (get m "2020-03-19")}))
        (apply merge)
        (sort-by val >))  
 
+  
   )
