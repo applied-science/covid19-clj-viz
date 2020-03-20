@@ -4,7 +4,6 @@
             [appliedsciencestudio.covid19-clj-viz.johns-hopkins :as jh]
             [appliedsciencestudio.covid19-clj-viz.viz :as viz :refer [oz-config
                                                                       barchart-dimensions]]
-            [clojure.data.csv :as csv]
             [clojure.string :as string]
             [jsonista.core :as json]
             [oz.core :as oz])
@@ -14,8 +13,9 @@
 
 ;;;; Another bar chart
 ;; ...sorted and with some rearranging around `province/country`
-(oz/view! (merge oz-config barchart-dimensions
+(oz/view! (merge oz-config
                  {:title "COVID19 cases in selected countries",
+                  :width 510, :height 200
                   :data {:values (->> jh/covid19-confirmed-csv
                                       rest
                                       ;; grab only province/state, country, and latest report of total cases:
