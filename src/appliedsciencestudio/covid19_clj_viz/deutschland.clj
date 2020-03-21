@@ -4,6 +4,21 @@
             [hickory.select :as s]
             [meta-csv.core :as mcsv]))
 
+(defn normalize-bundesland [bundesland]
+  "Standardizes English/German & typographic variation in German state names to standard German spelling.
+  Made with nonce code (and some digital massage) from geoJSON and wikipedia data."
+  (get {"Bavaria" "Bayern"
+        "Hesse" "Hessen"
+        "Lower Saxony" "Niedersachsen"
+        "North Rhine-Westphalia" "Nordrhein-Westfalen"
+        "Rhineland-Palatinate" "Rheinland-Pfalz"
+        "Saxony" "Sachsen"
+        "Saxony-Anhalt" "Sachsen-Anhalt"
+        "Schleswig Holstein" "Schleswig-Holstein"
+        "Thuringia" "Thüringen"}
+       bundesland bundesland))
+
+;;;; Scraping case data for areas of Germany
 (def covid-page
   "We want this data, but it's only published as HTML."
   (-> (slurp "https://www.citypopulation.de/en/germany/covid/")
@@ -20,6 +35,7 @@
       node)))
 
 (def citypop-data
+  "COVID19 case data by date and region, from citypopulation.com"
   (let [fields [:name :kind :cases-02-29 :cases-03-04 :cases-03-08 :cases-03-12 :cases-03-16 :cases-03-20]]
     (mapcat (fn [[state counties]]
               (let [state-name (-> (s/select (s/attr :data-wiki) state) first :attrs :data-wiki)]
@@ -31,20 +47,7 @@
                      (s/select (s/tag :tr) counties))))
             (butlast (partition 2 (s/select (s/tag :tbody) covid-page))))))
 
-(defn normalize-bundesland [bundesland]
-  "Standardizes English/German & typographic variation in German state names to standard German spelling.
-  Made with nonce code (and some digital massage) from geoJSON and wikipedia data."
-  (get {"Bavaria" "Bayern"
-        "Hesse" "Hessen"
-        "Lower Saxony" "Niedersachsen"
-        "North Rhine-Westphalia" "Nordrhein-Westfalen"
-        "Rhineland-Palatinate" "Rheinland-Pfalz"
-        "Saxony" "Sachsen"
-        "Saxony-Anhalt" "Sachsen-Anhalt"
-        "Schleswig Holstein" "Schleswig-Holstein"
-        "Thuringia" "Thüringen"}
-       bundesland bundesland))
-
+;;;; CSV parsing
 (defn coerce-type-from-string
   "Simplest possible type guessing, obviously not production-grade
   heuristics."
@@ -66,8 +69,9 @@
     s))
 
 (def bundeslaender-data
-  "Number of confirmed COVID-19 cases by German province (auf Deutsch).
-  Source: Robert Koch Institute https://www.rki.de/DE/Content/InfAZ/N/Neuartiges_Coronavirus/Fallzahlen.html"
+  "Map from Bundesland (German state) to case data.
+   Case data: cases, cases per 100.000 inhabitants, deaths, increase from previous report.
+   Source: Robert Koch Institute https://www.rki.de/DE/Content/InfAZ/N/Neuartiges_Coronavirus/Fallzahlen.html"
   (->> (mcsv/read-csv "resources/deutschland.covid19cases.tsv"
                       {:field-names-fn {"Bundesland" :bundesland
                                         "Anzahl" :cases

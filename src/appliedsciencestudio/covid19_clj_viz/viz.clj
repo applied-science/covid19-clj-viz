@@ -116,7 +116,9 @@
 (oz/view! (merge oz-config germany-dimensions
                  {:title "COVID19 cases in Germany (*not* population-scaled)"
                   :data {:name "germany"
-                         :url "/public/data/deutschland-bundeslaender.geo.json",
+                         ;; FIXME this keeps getting cached somewhere in Firefox or Oz
+                         ;; :url "/public/data/deutschland-bundeslaender.geo.json",
+                         :values deutschland-geojson-with-data
                          :format {:property "features"}},
                   :mark {:type "geoshape"  :stroke "white" :strokeWidth 1}
                   :encoding {:color {:field "Cases",
@@ -257,28 +259,26 @@
 ;;;; Total Cases of Coronavirus Outside of China
 ;; from Chart 9 https://medium.com/@tomaspueyo/coronavirus-act-today-or-people-will-die-f4d3d9cd99ca
 
-(def corona-outside-china-data
-  (->> (map (fn [ctry] [ctry (zipmap jh/csv-dates (jh/country-totals ctry jh/covid19-confirmed-csv))])
-            (set/difference jh/countries #{"Mainland China" "China" "Others"} ))
-       (reduce (fn [vega-values [country date->cases]]
-                 (if (> 500 (apply max (vals date->cases))) ; ignore countries with fewer than X cases
-                   vega-values
-                   (apply conj vega-values
-                          (map (fn [[d c]]
-                                 {:date d
-                                  :cases c
-                                  :country country})
-                               date->cases))))
-               [])
-       ;; purely for our human reading convenience:
-       (sort-by (juxt :country :date))))
-
 (oz/view!
  (merge-with merge oz-config
              {:title {:text "Total Cases of Coronavirus Outside of China"
                       :subtitle "(Countries with >50 cases as of 11.3.2020)"}
               :width 1200 :height 700
-              :data {:values corona-outside-china-data}
+              :data {:values
+                     (->> (map (fn [ctry] [ctry (zipmap jh/csv-dates (jh/country-totals ctry jh/covid19-confirmed-csv))])
+                               (set/difference jh/countries #{"Mainland China" "China" "Others"} ))
+                          (reduce (fn [vega-values [country date->cases]]
+                                    (if (> 500 (apply max (vals date->cases))) ; ignore countries with fewer than X cases
+                                      vega-values
+                                      (apply conj vega-values
+                                             (map (fn [[d c]]
+                                                    {:date d
+                                                     :cases c
+                                                     :country country})
+                                                  date->cases))))
+                                  [])
+                          ;; purely for our human reading convenience:
+                          (sort-by (juxt :country :date)))}
               :mark {:type "line" :strokeWidth 4 :point "transparent"}
               :encoding {:x {:field "date", :type "temporal"},
                          :y {:field "cases", :type "quantitative"}
