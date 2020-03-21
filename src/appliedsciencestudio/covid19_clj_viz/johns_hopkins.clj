@@ -1,7 +1,8 @@
 (ns appliedsciencestudio.covid19-clj-viz.johns-hopkins
   "Johns Hopkins COVID19 data sources, with util fns"
   (:require [appliedsciencestudio.covid19-clj-viz.world-bank :as world-bank]
-            [clojure.data.csv :as csv]
+            [clojure.data.csv :as csv] ;; TODO refactor across codebase to [meta-csv.core :as mcsv]
+            [meta-csv.core :as mcsv]
             [clojure.string :as string])
   (:import [java.time LocalDate]
            [java.time.format DateTimeFormatter]))
