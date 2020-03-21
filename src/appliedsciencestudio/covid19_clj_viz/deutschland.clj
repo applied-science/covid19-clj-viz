@@ -31,33 +31,19 @@
                      (s/select (s/tag :tr) counties))))
             (butlast (partition 2 (s/select (s/tag :tbody) covid-page))))))
 
-(def normalize-bundesland
-  "Mappings to normalize English/German and typographic variation to standard German spelling.
+(defn normalize-bundesland [bundesland]
+  "Standardizes English/German & typographic variation in German state names to standard German spelling.
   Made with nonce code (and some digital massage) from geoJSON and wikipedia data."
-  {"Bavaria" "Bayern"
-   "Hesse" "Hessen" 
-   "Lower Saxony" "Niedersachsen"
-   "North Rhine-Westphalia" "Nordrhein-Westfalen"
-   "Rhineland-Palatinate" "Rheinland-Pfalz"
-   "Saxony" "Sachsen"
-   "Saxony-Anhalt" "Sachsen-Anhalt"
-   "Schleswig Holstein" "Schleswig-Holstein"
-   "Thuringia" "Thüringen"})
-
-(def population
-  "Population of German states.
-  Source: Wikipedia https://en.m.wikipedia.org/wiki/List_of_German_states_by_population"
-  (->> (mcsv/read-csv "resources/deutschland.state-population.tsv"
-                      {:header? true
-                       :fields [{:field :state
-                                 :postprocess-fn #(get normalize-bundesland % %)}
-                                nil nil nil nil nil nil nil
-                                {:field :latest-population
-                                 :type :int
-                                 :preprocess-fn #(-> % string/trim (string/replace "," ""))}]})
-       (reduce (fn [m {:keys [state latest-population]}]
-                 (assoc m state latest-population))
-               {})))
+  (get {"Bavaria" "Bayern"
+        "Hesse" "Hessen"
+        "Lower Saxony" "Niedersachsen"
+        "North Rhine-Westphalia" "Nordrhein-Westfalen"
+        "Rhineland-Palatinate" "Rheinland-Pfalz"
+        "Saxony" "Sachsen"
+        "Saxony-Anhalt" "Sachsen-Anhalt"
+        "Schleswig Holstein" "Schleswig-Holstein"
+        "Thuringia" "Thüringen"}
+       bundesland bundesland))
 
 (defn coerce-type-from-string
   "Simplest possible type guessing, obviously not production-grade
@@ -90,8 +76,7 @@
                                         "Todesfälle" :deaths
                                         "Besonders betroffene Gebiete in Deutschland" :particularly-affected-areas}
                        :guess-types? false})
-       (mapv #(let [normed-bundesland (normalize-bundesland (:bundesland %) (:bundesland %))]
+       (mapv #(let [normed-bundesland (normalize-bundesland (:bundesland %))]
                 (vector normed-bundesland
-                        (-> (reduce (fn [m k] (update m k parse-german-number)) % (keys %))
-                            (assoc :population (population normed-bundesland))))))
+                        (reduce (fn [m k] (update m k parse-german-number)) % (keys %)))))
        (into {})))
