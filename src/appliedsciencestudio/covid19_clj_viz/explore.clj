@@ -18,16 +18,14 @@
                  {:title "COVID19 cases in selected countries",
                   :width 510, :height 200
                   :data {:values (->> jh/covid19-confirmed-csv
-                                      rest
-                                      ;; grab only province/state, country, and latest report of total cases:
-                                      (map (juxt first second last))
+                                      (map #(select-keys % [:province-state :country-region jh/last-reported-date]))
                                       ;; restrict to countries we're interested in:
-                                      (filter (comp #{"Mainland China" "Iran" "Italy" "Germany"} second))
-                                      (reduce (fn [acc [province country current-cases]]
-                                                (conj acc {:location (if (string/blank? province)
-                                                                       country
-                                                                       (str province ", " country))
-                                                           :cases (Integer/parseInt current-cases)}))
+                                      (filter (comp #{"Mainland China" "Iran" "Italy" "Germany"} :country-region))
+                                      (reduce (fn [acc {:keys [province-state country-region] :as m}]
+                                                (conj acc {:location (if (string/blank? province-state)
+                                                                       country-region
+                                                                       (str province-state ", " country-region))
+                                                           :cases (get m jh/last-reported-date)}))
                                               [])
                                       (remove (comp #{"Hubei, Mainland China"} :location))
                                       (sort-by :cases))},
@@ -131,87 +129,3 @@
                          :tooltip {:field "cases" :type "quantitative"}
                          :color {:field "country" :type "nominal"
                                  :scale {:range (mapv val viz/applied-science-palette)}}}}))
-
-
-
-;;;; Question: how long ago was X place where Y is now?
-;; e.g. X = Italy, Y = Germany means "how long until Germany looks like Italy today?"
-(defn case-count-in
-  "Last reported number of confirmd coronavirus cases in given `country`."
-  ([country]
-   (->> jh/covid19-confirmed-csv
-        (filter (comp #{country} second))
-        (map last)
-        (map #(Integer/parseInt %))
-        (reduce +)))
-  ([country days-ago]
-   (->> jh/covid19-confirmed-csv
-        (filter (comp #{country} second))
-        (map (comp #(nth % days-ago) reverse))
-        (map #(Integer/parseInt %))
-        (reduce +))))
-
-
-(comment
-
-  (case-count-in "Germany")
-
-  ;; test on a country with multiple provinces reporting
-  (= (case-count-in "Australia")
-     (case-count-in "Australia" 0))
-  
-  )
-
-
-(defn date-cases-surpassed [country n]
-  "First date when `country` had greater than the given number of _population-scaled_ cases `n`."
-  (->> (first (filter (comp #{country} second)
-                      jh/covid19-confirmed-csv))
-       (drop 4)
-       (map (comp (fn [n] (/ n (get world-bank/country-populations country)))
-                  (fn [s] (Integer/parseInt s))))
-       (zipmap (map (comp str jh/parse-covid19-date)
-                    (drop 4 (first jh/covid19-confirmed-csv))))
-       (sort-by val)
-       (some (fn [[d c]] (when (> c n)
-                          d)))))
-
-(defn days-between [yyyy-mm-dd1 yyyy-mm-dd2]
-  (.until (LocalDate/parse yyyy-mm-dd1 (DateTimeFormatter/ofPattern "yyyy-MM-dd"))
-          (LocalDate/parse yyyy-mm-dd2 (DateTimeFormatter/ofPattern "yyyy-MM-dd"))
-          ChronoUnit/DAYS))
-
-(comment
-
-  (date-cases-surpassed "Italy" (/ 10 (get world-bank/country-populations "Italy")))
-  ;; "2020-02-21"
-  
-  (/ (case-count-in "Germany")
-     (get world-bank/country-populations "Germany"))
-  ;; 954/41463961
-
-  (/ (case-count-in "Italy")
-     (get world-bank/country-populations "Italy"))  
-  ;; 4154/20143761
-
-  (let [a "Germany"]
-    (days-between (date-cases-surpassed "Italy" (/ (case-count-in a)
-                                                   (get world-bank/country-populations a)))
-                  (str (jh/parse-covid19-date (last (first jh/covid19-confirmed-csv))))))
-  ;; 10  
-  ;; Germany is trailing just over a week behind Italy, ceteris paribus
-  ;; (without population adjustmnet, it was 9)
-
-
-
-  (case-count-in "US")
-
-  (let [a "US"]
-    (days-between (date-cases-surpassed "Italy" (/ 50000 #_1629 #_(case-count-in a)
-                                                   (get world-bank/country-populations "United States")))
-                  (str (jh/parse-covid19-date (last (first jh/covid19-confirmed-csv))))))
-
-
-  ;; TODO rate of change for past few days
-  
-  )

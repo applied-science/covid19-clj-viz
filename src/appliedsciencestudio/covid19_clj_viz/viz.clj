@@ -3,7 +3,7 @@
             [appliedsciencestudio.covid19-clj-viz.deutschland :as deutschland]
             [appliedsciencestudio.covid19-clj-viz.johns-hopkins :as jh]
             [appliedsciencestudio.covid19-clj-viz.world-bank :as world-bank]
-            [clojure.set :refer [rename-keys]]
+            [clojure.set :as set :refer [rename-keys]]
             [clojure.string :as string]
             [jsonista.core :as json]
             [oz.core :as oz]))
@@ -116,7 +116,9 @@
 (oz/view! (merge oz-config germany-dimensions
                  {:title "COVID19 cases in Germany (*not* population-scaled)"
                   :data {:name "germany"
-                         :url "/public/data/deutschland-bundeslaender.geo.json",
+                         ;; FIXME this keeps getting cached somewhere in Firefox or Oz
+                         ;; :url "/public/data/deutschland-bundeslaender.geo.json",
+                         :values deutschland-geojson-with-data
                          :format {:property "features"}},
                   :mark {:type "geoshape"  :stroke "white" :strokeWidth 1}
                   :encoding {:color {:field "Cases",
@@ -136,93 +138,41 @@
 
 ;; Bar chart of the severity of the outbreak across regions in China and Germany
 ;; (with or without the outlier that is China's Hubei province)
-(oz/view! (merge oz-config
-                 {:title "Confirmed COVID19 cases in China and Germany",
-                  :data {:values (let [date "2020-03-19"]
-                                   (->> jh/covid19-confirmed-csv2
-                                        ;; Notice improved readability from working with seq of maps:
-                                        (map #(select-keys % [:province-state :country-region date]))
-                                        (filter (comp #{"China" "Mainland China" "Germany"} :country-region))
-                                        (reduce (fn [acc m]
-                                                  (conj acc {:state-province (if (string/blank? (:province-state m))
-                                                                               "(All German federal states)"  
-                                                                               (:province-state m))
-                                                             :cases (get m date)}))
-                                                [])
-                                        (concat (sort-by :state-province (vals deutschland/bundeslaender-data)))
-                                        ;; ;; FIXME this is the line to toggle:
-                                        #_(remove (comp #{"Hubei"} :state-province))
-                                        (sort-by :cases)))
-                         #_(->> jh/covid19-confirmed-csv
-                                      rest
-                                      ;; grab only province/state, country, and latest report of total cases:
-                                      (map (juxt first second last))
-                                      ;; restrict to countries we're interested in:
-                                      (filter (comp #{"China" "Mainland China" "Germany"} second))
-                                      (reduce (fn [acc [province country current-cases]]
-                                                (conj acc {:state-or-province (if (string/blank? province)
-                                                                                "(All German federal states)"
-                                                                                province)
-                                                           :cases (Integer/parseInt current-cases)}))
-                                              [])
-                                      (concat (->> deutschland/bundeslaender-data
-                                                   vals
-                                                   (remove (comp #{"Gesamt"} :bundesland))
-                                                   (map #(rename-keys % {:bundesland :state-or-province}))))
-                                      ;; FIXME this is the line to toggle:
-                                      ;; (remove (comp #{"Hubei"} :state-or-province))
-                                      (sort-by :cases))},
-                  :mark {:type "bar" :color "#9085DA"}
-                  :encoding {:x {:field "cases", :type "quantitative"}
-                             :y {:field "state-province", :type "ordinal"
-                                 :sort nil}}}))
-
-
-(comment
-
-  ;;;; We switch now to a better data source
-  (let [date "2020-03-19"]
-    (->> jh/covid19-confirmed-csv2
-         ;; Notice improved readability from working with seq of maps:
-        (map #(select-keys % [:province-state :country-region date]))
-        (filter (comp #{"China" "Mainland China" "Germany"} :country-region))
-        (reduce (fn [acc m]
-                  (conj acc {:state-province (if (string/blank? (:province-state m))
-                                               "(All German federal states)"  
-                                               (:province-state m))
-                             :cases (get m date)}))
-                [])
-        (concat (sort-by :state-province (vals deutschland/bundeslaender-data)))
-        ;; ;; FIXME this is the line to toggle:
-        (remove (comp #{"Hubei"} :state-or-province))
-        (sort-by :cases)))
-  
-
-  )
-
-
-
+(oz/view!
+ (merge oz-config barchart-dimensions
+        {:title "Confirmed COVID19 cases in China and Germany",
+         :data {:values (let [date "2020-03-19"]
+                          (->> jh/covid19-confirmed-csv
+                               ;; Notice improved readability from working with seq of maps:
+                               (map #(select-keys % [:province-state :country-region date]))
+                               (filter (comp #{"China" "Mainland China" "Germany"} :country-region))
+                               (reduce (fn [acc m]
+                                         (conj acc {:state-province (if (string/blank? (:province-state m))
+                                                                      "(All German federal states)"  
+                                                                      (:province-state m))
+                                                    :cases (get m date)}))
+                                       [])
+                               (concat (->> deutschland/bundeslaender-data
+                                            vals
+                                            (remove (comp #{"Gesamt"} :bundesland))
+                                            (map (comp #(select-keys % [:state-province :cases])
+                                                       #(rename-keys % {:bundesland :state-province})))
+                                            (sort-by :state-province)))
+                               ;; ;; FIXME this is the line to toggle:
+                               (remove (comp #{"Hubei"} :state-province))
+                               (sort-by :cases)))},
+         :mark {:type "bar" :color "#9085DA"}
+         :encoding {:x {:field "cases", :type "quantitative"}
+                    :y {:field "state-province", :type "ordinal"
+                        :sort nil}}}))
 
 
 ;;;; ===========================================================================
-;;;; Evaluate comparative risk in Europe, to answer question from spouse
-
-(comment
-
-  ;; let's take a quick look at country names in the case data
-  (->> jh/covid19-confirmed-csv
-       (map second)
-       distinct)
-
-  )
-
-
-;;;; ===========================================================================
-;;;; Bar chart of cases in Europe (scaled to World Bank population estimate)
-(oz/view! (merge oz-config barchart-dimensions
+;;;; Bar chart of cases in Europe (FIXME scaled to World Bank population estimate)
+#_(oz/view! (merge oz-config barchart-dimensions
                  {:title "COVID19 cases in European countries, per 100k inhabitants",
                   :data {:values (->> jh/covid19-confirmed-csv
-                                      (map (juxt second last))
+                                      (map #(select-keys % [:country-region jh/last-reported-date]))
                                       (filter (comp #{"France" "Spain" "Germany"
                                                       "Sweden" "Italy" "Switzerland"
                                                       "Finland" "Greece" "UK" "Russia"
@@ -231,22 +181,12 @@
                                                       "Denmark" "Netherlands" "Lithuania"
                                                       "Ireland" "Czech Republic" "Portugal"
                                                       "Ukraine"}
-                                                    first))
-                                      (reduce (fn [acc [country current-cases]]
-                                                (update acc country
-                                                        (fn [m] (merge-with + (select-keys m [:cases])
-                                                                           {:country (if (= "UK" country)
-                                                                                       "United Kingdom"
-                                                                                       country)
-                                                                            :cases (Integer/parseInt current-cases)
-                                                                            :pop (get world-bank/country-populations country)}))))
-                                              {})
-                                      vals
-                                      (sort-by :cases))},
+                                                    :country-region))
+                                      ;; TODO (map #(assoc % :cases-per-100k))
+                                      (sort-by #(get % jh/last-reported-date)))},
                   :mark {:type "bar" :color "#9085DA"}
-                  :encoding {:x {:field "cases", :type "quantitative"}
-                             :y {:field "country", :type "ordinal"
-                                 :sort nil}}}))
+                  :encoding {:x {:field jh/last-reported-date :type "quantitative"}
+                             :y {:field "country-region", :type "ordinal" #_ "nominal"}}}))
 
 (def china-dimensions
   {:width 570 :height 450})
@@ -319,38 +259,26 @@
 ;;;; Total Cases of Coronavirus Outside of China
 ;; from Chart 9 https://medium.com/@tomaspueyo/coronavirus-act-today-or-people-will-die-f4d3d9cd99ca
 
-(def corona-outside-china-data
-  (->> jh/covid19-confirmed-csv
-       rest ; drop header
-       (remove (comp #{"Mainland China" "China" "Others"} second))
-       (group-by second)
-       (map (fn [[k v]]
-              [k (->> v
-                      (apply map (fn [& colls] colls)) ; turn it sideways so we look at data column-wise
-                      (drop 4) ; drop province, country, lat, long
-                      (map (fn [cases-across-provinces]
-                             (apply + (map #(Integer/parseInt %) cases-across-provinces))))
-                      (zipmap (map (comp str jh/parse-covid19-date)
-                                   (drop 4 (first jh/covid19-confirmed-csv)))))]))
-       (reduce (fn [vega-values [country date->cases]]
-                 (if (> 500 (apply max (vals date->cases))) ; ignore countries with fewer than X cases
-                   vega-values
-                   (apply conj vega-values
-                          (map (fn [[d c]]
-                                 {:date d
-                                  :cases c
-                                  :country country})
-                               date->cases))))
-               [])
-       ;; purely for our human reading convenience:
-       (sort-by (juxt :country :date))))
-
 (oz/view!
  (merge-with merge oz-config
              {:title {:text "Total Cases of Coronavirus Outside of China"
                       :subtitle "(Countries with >50 cases as of 11.3.2020)"}
               :width 1200 :height 700
-              :data {:values corona-outside-china-data}
+              :data {:values
+                     (->> (map (fn [ctry] [ctry (zipmap jh/csv-dates (jh/country-totals ctry jh/covid19-confirmed-csv))])
+                               (set/difference jh/countries #{"Mainland China" "China" "Others"} ))
+                          (reduce (fn [vega-values [country date->cases]]
+                                    (if (> 500 (apply max (vals date->cases))) ; ignore countries with fewer than X cases
+                                      vega-values
+                                      (apply conj vega-values
+                                             (map (fn [[d c]]
+                                                    {:date d
+                                                     :cases c
+                                                     :country country})
+                                                  date->cases))))
+                                  [])
+                          ;; purely for our human reading convenience:
+                          (sort-by (juxt :country :date)))}
               :mark {:type "line" :strokeWidth 4 :point "transparent"}
               :encoding {:x {:field "date", :type "temporal"},
                          :y {:field "cases", :type "quantitative"}

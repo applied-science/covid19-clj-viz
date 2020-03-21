@@ -1,7 +1,6 @@
 (ns appliedsciencestudio.covid19-clj-viz.johns-hopkins
   "Johns Hopkins COVID19 data sources, with util fns"
   (:require [appliedsciencestudio.covid19-clj-viz.world-bank :as world-bank]
-            [clojure.data.csv :as csv] ;; TODO refactor across codebase to [meta-csv.core :as mcsv]
             [meta-csv.core :as mcsv]
             [clojure.string :as string])
   (:import [java.time LocalDate]
@@ -10,48 +9,58 @@
 (defn parse-covid19-date [mm-dd-yy]
   (LocalDate/parse mm-dd-yy (DateTimeFormatter/ofPattern "M/d/yy")))
 
-;; TODO get rid of this; long live `meta-csv`
+(defn field-names [^String s]
+  (if (#{"Province/State" "Country/Region" "Lat" "Long"} s)
+    (-> s
+        string/lower-case
+        (string/replace "/" "-")
+        keyword)
+    (str (parse-covid19-date s))))
+
 (def covid19-confirmed-csv
   "From https://github.com/CSSEGISandData/COVID-19/tree/master/who_covid_19_situation_reports"
-  (csv/read-csv (slurp "resources/COVID-19/csse_covid_19_data/csse_covid_19_time_series/time_series_19-covid-Confirmed.csv")))
-
-(def covid19-confirmed-csv2
-  "From https://github.com/CSSEGISandData/COVID-19/tree/master/who_covid_19_situation_reports"
   (mcsv/read-csv "resources/COVID-19/csse_covid_19_data/csse_covid_19_time_series/time_series_19-covid-Confirmed.csv"
-                 {:field-names-fn (fn [s] (if (#{"Province/State" "Country/Region" "Lat" "Long"} s)
-                                           (-> s
-                                               string/lower-case
-                                               (string/replace "/" "-")
-                                               keyword)
-                                           (str (parse-covid19-date s))))}))
+                 {:field-names-fn field-names}))
 
 (def covid19-recovered-csv
   "From https://github.com/CSSEGISandData/COVID-19/tree/master/who_covid_19_situation_reports"
-  (csv/read-csv (slurp "resources/COVID-19/csse_covid_19_data/csse_covid_19_time_series/time_series_19-covid-Recovered.csv")))
+  (mcsv/read-csv "resources/COVID-19/csse_covid_19_data/csse_covid_19_time_series/time_series_19-covid-Recovered.csv"
+                 {:field-names-fn field-names}))
 
 (def covid19-deaths-csv
   "From https://github.com/CSSEGISandData/COVID-19/tree/master/who_covid_19_situation_reports"
-  (csv/read-csv (slurp "resources/COVID-19/csse_covid_19_data/csse_covid_19_time_series/time_series_19-covid-Deaths.csv")))
+  (mcsv/read-csv "resources/COVID-19/csse_covid_19_data/csse_covid_19_time_series/time_series_19-covid-Deaths.csv"
+                 {:field-names-fn field-names}))
+
+(def csv-dates
+  (drop 4 (map first (first covid19-confirmed-csv))))
+
+(def last-reported-date
+  (->> covid19-confirmed-csv
+       first
+       keys
+       (remove keyword?)
+       (sort #(compare %2 %1))
+       first))
 
 (def countries
-  (set (map second covid19-confirmed-csv)))
+  (set (map :country-region covid19-confirmed-csv)))
 
 (defn data-exists-for-country? [kind country]
   (let [rows (case kind
               :recovered covid19-recovered-csv
               :deaths    covid19-deaths-csv
               :confirmed covid19-confirmed-csv)]
-   (some (comp #{country} second) rows)))
+   (some (comp #{country} :country-region) rows)))
 
 (defn country-totals
   "Aggregates given data for `country`, possibly spread across
   provinces/states, into a single sequence ('row')."
   [country rows]
   (->> rows
-       rest
-       (filter (comp #{country} second))
-       (map #(drop 4 %))
-       (map #(map (fn [n] (Integer/parseInt n)) %))
+       (filter (comp #{country} :country-region))
+       (map #(dissoc % :country-region :province-state :lat :long))
+       (map vals)
        (apply map +)))
 
 (defn new-daily-cases-in [kind country]
@@ -67,9 +76,8 @@
          (reduce (fn [acc [n-yesterday n-today]]
                    (conj acc (max 0 (- n-today n-yesterday))))
                  [])
-         (zipmap (map (comp str parse-covid19-date)
-                      (drop 5 (first rows))))
-         (sort-by val))))
+         (zipmap csv-dates)
+         (sort-by key))))
 
 (comment
   (country-totals "Germany" covid19-confirmed-csv)
@@ -79,7 +87,7 @@
   (country-totals "Australia" covid19-deaths-csv)
   
   (new-daily-cases-in :confirmed "Germany")
-
+  
   (new-daily-cases-in :confirmed "Korea, South")
 
   ;; test a country with province-level data
