@@ -3,6 +3,7 @@
             [appliedsciencestudio.covid19-clj-viz.deutschland :as deutschland]
             [appliedsciencestudio.covid19-clj-viz.johns-hopkins :as jh]
             [appliedsciencestudio.covid19-clj-viz.world-bank :as world-bank]
+            [clojure.set :refer [rename-keys]]
             [clojure.string :as string]
             [jsonista.core :as json]
             [oz.core :as oz]))
@@ -31,13 +32,12 @@
                     (assoc feature
                            :Bundesland     (:NAME_1 (:properties feature))
                            :Cases          (get-in deutschland/bundeslaender-data [(:NAME_1 (:properties feature)) :cases] 0)
-                           :Population     (get deutschland/population (deutschland/normalize-bundesland (:NAME_1 (:properties feature))))
                            :Cases-per-100k (get-in deutschland/bundeslaender-data [(:NAME_1 (:properties feature)) :cases-per-100k] 0)))
                   features))))
 
 (comment
 
-  ;;;; Create new GeoJSONs with population & COVID19 data added
+  ;;;; Create new GeoJSONs with COVID19 data added
 
   ;; Germany
   ;; medium quality GeoJSON from https://github.com/isellsoap/deutschlandGeoJSON/blob/master/2_bundeslaender/3_mittel.geojson
@@ -136,28 +136,27 @@
 
 ;; Bar chart of the severity of the outbreak across regions in China and Germany
 ;; (with or without the outlier that is China's Hubei province)
-(oz/view! (merge oz-config barchart-dimensions
+(oz/view! (merge oz-config
                  {:title "Confirmed COVID19 cases in China and Germany",
                   :data {:values (->> jh/covid19-confirmed-csv
                                       rest
                                       ;; grab only province/state, country, and latest report of total cases:
                                       (map (juxt first second last))
                                       ;; restrict to countries we're interested in:
-                                      (filter (comp #{"Mainland China" "Germany"} second))
+                                      (filter (comp #{"China" "Mainland China" "Germany"} second))
                                       (reduce (fn [acc [province country current-cases]]
-                                                (if (string/blank? province)
-                                                  ;; put the summary of Germany first
-                                                  (concat [{:state-or-province "(All German federal states)"
-                                                            :cases (Integer/parseInt current-cases)}]
-                                                          acc)
-                                                  ;; otherwise just add the datapoint to the list
-                                                  (conj acc {:state-or-province province
-                                                             :cases (Integer/parseInt current-cases)})))
+                                                (conj acc {:state-or-province (if (string/blank? province)
+                                                                                "(All German federal states)"
+                                                                                province)
+                                                           :cases (Integer/parseInt current-cases)}))
                                               [])
-                                      (concat (sort-by :state-or-province (vals deutschland/bundeslaender-data)))
+                                      (concat (->> deutschland/bundeslaender-data
+                                                   vals
+                                                   (remove (comp #{"Gesamt"} :bundesland))
+                                                   (map #(rename-keys % {:bundesland :state-or-province}))))
                                       ;; FIXME this is the line to toggle:
-                                      (remove (comp #{"Hubei"} :state-or-province))
-                                      #_ (sort-by :cases))},
+                                      ;; (remove (comp #{"Hubei"} :state-or-province))
+                                      (sort-by :cases))},
                   :mark {:type "bar" :color "#9085DA"}
                   :encoding {:x {:field "cases", :type "quantitative"}
                              :y {:field "state-or-province", :type "ordinal"

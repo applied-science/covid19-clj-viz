@@ -16,21 +16,6 @@
         "Thuringia" "Thüringen"}
        bundesland bundesland))
 
-(def population
-  "Population of German states.
-  Source: Wikipedia https://en.m.wikipedia.org/wiki/List_of_German_states_by_population"
-  (->> (mcsv/read-csv "resources/deutschland.state-population.tsv"
-                      {:header? true
-                       :fields [{:field :state
-                                 :postprocess-fn normalize-bundesland}
-                                nil nil nil nil nil nil nil
-                                {:field :latest-population
-                                 :type :int
-                                 :preprocess-fn #(-> % string/trim (string/replace "," ""))}]})
-       (reduce (fn [m {:keys [state latest-population]}]
-                 (assoc m state latest-population))
-               {})))
-
 (defn coerce-type-from-string
   "Simplest possible type guessing, obviously not production-grade
   heuristics."
@@ -64,6 +49,5 @@
                        :guess-types? false})
        (mapv #(let [normed-bundesland (normalize-bundesland (:bundesland %))]
                 (vector normed-bundesland
-                        (-> (reduce (fn [m k] (update m k parse-german-number)) % (keys %))
-                            (assoc :population (population normed-bundesland))))))
+                        (reduce (fn [m k] (update m k parse-german-number)) % (keys %)))))
        (into {})))

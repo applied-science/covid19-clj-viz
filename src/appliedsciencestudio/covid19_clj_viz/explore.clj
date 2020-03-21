@@ -4,6 +4,7 @@
             [appliedsciencestudio.covid19-clj-viz.johns-hopkins :as jh]
             [appliedsciencestudio.covid19-clj-viz.viz :as viz :refer [oz-config
                                                                       barchart-dimensions]]
+            [appliedsciencestudio.covid19-clj-viz.world-bank :as world-bank]
             [clojure.string :as string]
             [jsonista.core :as json]
             [oz.core :as oz])
@@ -167,7 +168,7 @@
   (->> (first (filter (comp #{country} second)
                       jh/covid19-confirmed-csv))
        (drop 4)
-       (map (comp (fn [n] (/ n (get viz/country-populations country)))
+       (map (comp (fn [n] (/ n (get world-bank/country-populations country)))
                   (fn [s] (Integer/parseInt s))))
        (zipmap (map (comp str jh/parse-covid19-date)
                     (drop 4 (first jh/covid19-confirmed-csv))))
@@ -182,20 +183,20 @@
 
 (comment
 
-  (date-cases-surpassed "Italy" (/ 10 (get viz/country-populations "Italy")))
+  (date-cases-surpassed "Italy" (/ 10 (get world-bank/country-populations "Italy")))
   ;; "2020-02-21"
   
   (/ (case-count-in "Germany")
-     (get viz/country-populations "Germany"))
+     (get world-bank/country-populations "Germany"))
   ;; 954/41463961
 
   (/ (case-count-in "Italy")
-     (get viz/country-populations "Italy"))  
+     (get world-bank/country-populations "Italy"))  
   ;; 4154/20143761
 
   (let [a "Germany"]
     (days-between (date-cases-surpassed "Italy" (/ (case-count-in a)
-                                                   (get viz/country-populations a)))
+                                                   (get world-bank/country-populations a)))
                   (str (jh/parse-covid19-date (last (first jh/covid19-confirmed-csv))))))
   ;; 10  
   ;; Germany is trailing just over a week behind Italy, ceteris paribus
@@ -207,7 +208,7 @@
 
   (let [a "US"]
     (days-between (date-cases-surpassed "Italy" (/ 50000 #_1629 #_(case-count-in a)
-                                                   (get viz/country-populations "United States")))
+                                                   (get world-bank/country-populations "United States")))
                   (str (jh/parse-covid19-date (last (first jh/covid19-confirmed-csv))))))
 
 
