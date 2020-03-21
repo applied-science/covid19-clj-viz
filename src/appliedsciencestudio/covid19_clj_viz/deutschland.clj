@@ -37,7 +37,8 @@
     s))
 
 (def bundeslaender-data
-  "Map from bundesland to population, cases, and cases-per-100k persons."
+  "Map from bundesland to population, cases, and cases-per-100k persons.
+  Source: Robert Koch Institute https://www.rki.de/DE/Content/InfAZ/N/Neuartiges_Coronavirus/Fallzahlen.html"
   (->> (mcsv/read-csv "resources/deutschland.covid19cases.tsv"
                       {:field-names-fn {"Bundesland" :bundesland
                                         "Anzahl" :cases
