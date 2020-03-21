@@ -1,6 +1,7 @@
 {:paths ["resources" "src"]
  :deps {org.clojure/clojure {:mvn/version "1.10.1"}
         org.clojure/data.csv {:mvn/version "1.0.0"}
+        hickory {:mvn/version "0.7.1"}
         meta-csv {:mvn/version "0.1.0"}
         metasoarous/oz {:mvn/version "1.6.0-alpha6"} ;; for output to Vega
         metosin/jsonista {:mvn/version "0.2.5"}}}
