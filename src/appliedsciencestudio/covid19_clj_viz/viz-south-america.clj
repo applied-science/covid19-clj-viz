@@ -18,7 +18,13 @@
                       :Cases (get southamerica/cases (:geounit (:properties feature)) cases))
                       ))
                   features ))))
-
+;; Now some setup for more interesting visualizations
+(def applied-science-palette
+  {:pink   "#D46BC8"
+   :green  "#38D996"
+   :blue   "#4FADFF"
+   :purple "#9085DA"
+   :white "#FFFFFF"})
 (def peru-geojson-with-data
   (update (json/read-value (java.io.File. "resources/public/public/data/peru.geo.json")
                            (json/object-mapper {:decode-key-fn true}))
@@ -68,14 +74,17 @@
 
 (oz/view!
  (merge-with merge oz-config south-america-dimensions
-             {:title {:text "COVID-19 cases in South America by country"}
+             {:title {:text "COVID-19 cases in Peru by country"}
               :data {:name "south-america"
                      :values peru-geojson-with-data
                      :format {:property "features"}},
               :mark {:type "geoshape" :stroke "white" :strokeWidth 1}
               :encoding {:color {:field "Cases",
                                  :type "quantitative"
-                                 :scale {:range ["#fde5d9" "#a41e23"]}}
+                                 :scale {:range [(:white applied-science-palette)
+                                                 (:blue applied-science-palette)
+                                                 (:purple applied-science-palette)
+                                                 ]}}
                          :tooltip [
                                    {:field "Cases" :type "quantitative"}]}
               :selection {:highlight {:on "mouseover" :type "single"}}}))
