@@ -31,7 +31,7 @@
                     (assoc feature
                            :Bundesland     (:NAME_1 (:properties feature))
                            :Cases          (get-in deutschland/bundeslaender-data [(:NAME_1 (:properties feature)) :cases] 0)
-                           :Population     (get deutschland/population (get deutschland/normalize-bundesland (:NAME_1 (:properties feature)) (:NAME_1 (:properties feature))))
+                           :Population     (get deutschland/population (deutschland/normalize-bundesland (:NAME_1 (:properties feature))))
                            :Cases-per-100k (get-in deutschland/bundeslaender-data [(:NAME_1 (:properties feature)) :cases-per-100k] 0)))
                   features))))
 

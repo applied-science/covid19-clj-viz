@@ -2,18 +2,19 @@
   (:require [clojure.string :as string]
             [meta-csv.core :as mcsv]))
 
-(def normalize-bundesland
-  "Mappings to normalize English/German and typographic variation to standard German spelling.
+(defn normalize-bundesland [bundesland]
+  "Standardizes English/German & typographic variation in German state names to standard German spelling.
   Made with nonce code (and some digital massage) from geoJSON and wikipedia data."
-  {"Bavaria" "Bayern"
-   "Hesse" "Hessen" 
-   "Lower Saxony" "Niedersachsen"
-   "North Rhine-Westphalia" "Nordrhein-Westfalen"
-   "Rhineland-Palatinate" "Rheinland-Pfalz"
-   "Saxony" "Sachsen"
-   "Saxony-Anhalt" "Sachsen-Anhalt"
-   "Schleswig Holstein" "Schleswig-Holstein"
-   "Thuringia" "Thüringen"})
+  (get {"Bavaria" "Bayern"
+        "Hesse" "Hessen"
+        "Lower Saxony" "Niedersachsen"
+        "North Rhine-Westphalia" "Nordrhein-Westfalen"
+        "Rhineland-Palatinate" "Rheinland-Pfalz"
+        "Saxony" "Sachsen"
+        "Saxony-Anhalt" "Sachsen-Anhalt"
+        "Schleswig Holstein" "Schleswig-Holstein"
+        "Thuringia" "Thüringen"}
+       bundesland bundesland))
 
 (def population
   "Population of German states.
@@ -21,7 +22,7 @@
   (->> (mcsv/read-csv "resources/deutschland.state-population.tsv"
                       {:header? true
                        :fields [{:field :state
-                                 :postprocess-fn #(get normalize-bundesland % %)}
+                                 :postprocess-fn normalize-bundesland}
                                 nil nil nil nil nil nil nil
                                 {:field :latest-population
                                  :type :int
@@ -61,7 +62,7 @@
                                         "Todesfälle" :deaths
                                         "Besonders betroffene Gebiete in Deutschland" :particularly-affected-areas}
                        :guess-types? false})
-       (mapv #(let [normed-bundesland (normalize-bundesland (:bundesland %) (:bundesland %))]
+       (mapv #(let [normed-bundesland (normalize-bundesland (:bundesland %))]
                 (vector normed-bundesland
                         (-> (reduce (fn [m k] (update m k parse-german-number)) % (keys %))
                             (assoc :population (population normed-bundesland))))))
