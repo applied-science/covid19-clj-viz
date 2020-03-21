@@ -13,10 +13,4 @@
 
 (def peru-cases
   "Current number of COVID19 cases in Peru by regions"
-  (->> (csv/read-csv (slurp "resources/deutschland.covid19cases.06-11-2020.tsv"))
-       (map (juxt first second last))
-       (filter (comp #{"Peru" "Brazil" "Argentina"
-                       "Chile" "Bolivia" "Colombia"
-                       "Ecuador" "Uruguay" "Paraguay" "Venezuela"
-                       "Suriname" "Guyana"} second))
-       ))
+  (->> (csv/read-csv (slurp "resources/peru-covit19cases.csv"))))

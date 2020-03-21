@@ -19,6 +19,20 @@
                       ))
                   features ))))
 
+(def peru-geojson-with-data
+  (update (json/read-value (java.io.File. "resources/public/public/data/peru.geo.json")
+                           (json/object-mapper {:decode-key-fn true}))
+          :features
+          (fn [features]
+            (mapv (fn [feature]
+                    (let [cases ( first (first (filter (comp #{(:NOMBDEP (:properties feature))} second)
+                                                       southamerica/peru-cases)))]
+                      (assoc feature
+                      :Name (:NOMBDEP (:properties feature))
+                      :Cases (get southamerica/peru-cases (:NOMBDEP (:properties feature)) cases))
+                      ))
+                  features ))))
+
 (def oz-config
   "Default settings for Oz visualizations"
   (let [font "IBM Plex Mono"]
