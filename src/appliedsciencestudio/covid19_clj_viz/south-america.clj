@@ -13,4 +13,4 @@
 
 (def peru-cases
   "Current number of COVID19 cases in Peru by regions"
-  (->> (csv/read-csv (slurp "resources/peru-covit19cases.csv"))))
+  (->> (csv/read-csv (slurp "resources/peru-covid19cases.csv"))))
