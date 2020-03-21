@@ -12,7 +12,7 @@
                {})))
 
 (def province-populations
-  "from https://en.m.wikipedia.org/wiki/List_of_Chinese_administrative_divisions_by_population
+  "From https://en.m.wikipedia.org/wiki/List_of_Chinese_administrative_divisions_by_population#Current_population
   with some hand-correction"
   (->> (mcsv/read-csv "resources/china.province-population.tsv")
        ;; only take the name of the province and 2017 population data

@@ -1,7 +1,6 @@
 (ns appliedsciencestudio.covid19-clj-viz.deutschland
-  (:require [clojure.data.csv :as csv]
-            [meta-csv.core :as mcsv]
-            [clojure.string :as string]))
+  (:require [clojure.string :as string]
+            [meta-csv.core :as mcsv]))
 
 (def normalize-bundesland
   "Mappings to normalize English/German and typographic variation to standard German spelling.
@@ -21,11 +20,14 @@
   Source: Wikipedia https://en.m.wikipedia.org/wiki/List_of_German_states_by_population"
   (->> (mcsv/read-csv "resources/deutschland.state-population.tsv"
                       {:header? true
-                       :field-names-fn (comp keyword string/lower-case)})
-       (reduce (fn [m {state :state population :2018}]
-                 (assoc m
-                        (get normalize-bundesland state state)
-                        (Integer/parseInt (string/replace population "," ""))))
+                       :fields [{:field :state
+                                 :postprocess-fn #(get normalize-bundesland % %)}
+                                {:skip 7}
+                                {:field :latest-population
+                                 :type :int
+                                 :preprocess-fn #(-> % string/trim (string/replace "," ""))}]})
+       (reduce (fn [m {:keys [state latest-population]}]
+                 (assoc m state latest-population))
                {})))
 
 (defn coerce-type-from-string
