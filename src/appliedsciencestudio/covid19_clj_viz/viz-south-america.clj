@@ -25,8 +25,8 @@
           :features
           (fn [features]
             (mapv (fn [feature]
-                    (let [cases (first (filter (comp #{(:NOMBDEP (:properties feature))} first)
-                                                       southamerica/peru-cases))]
+                    (let [cases (nth (first(filter (comp #{"LIMA"} first)
+                                                       southamerica/peru-cases)) 1)]
                       (assoc feature
                       :Name (:NOMBDEP (:properties feature))
                       :Cases (get southamerica/peru-cases (:NOMBDEP (:properties feature)) cases))
@@ -57,6 +57,20 @@
              {:title {:text "COVID-19 cases in South America by country"}
               :data {:name "south-america"
                      :values south-america-geojson-with-data
+                     :format {:property "features"}},
+              :mark {:type "geoshape" :stroke "white" :strokeWidth 1}
+              :encoding {:color {:field "Cases",
+                                 :type "quantitative"
+                                 :scale {:range ["#fde5d9" "#a41e23"]}}
+                         :tooltip [
+                                   {:field "Cases" :type "quantitative"}]}
+              :selection {:highlight {:on "mouseover" :type "single"}}}))
+
+(oz/view!
+ (merge-with merge oz-config south-america-dimensions
+             {:title {:text "COVID-19 cases in South America by country"}
+              :data {:name "south-america"
+                     :values peru-geojson-with-data
                      :format {:property "features"}},
               :mark {:type "geoshape" :stroke "white" :strokeWidth 1}
               :encoding {:color {:field "Cases",
