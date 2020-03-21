@@ -1,6 +1,35 @@
 (ns appliedsciencestudio.covid19-clj-viz.deutschland
   (:require [clojure.string :as string]
+            [hickory.core :as hick]
+            [hickory.select :as s]
             [meta-csv.core :as mcsv]))
+
+(def covid-page
+  "We want this data, but it's only published as HTML."
+  (-> (slurp "https://www.citypopulation.de/en/germany/covid/")
+      hick/parse
+      hick/as-hickory))
+
+(defn deepest-content
+  "Drill down to the deepest content node."
+  [node]
+  (if-let [content (or (:content node) (:content (first node)))]
+    (deepest-content content)
+    (if (vector? node)
+      (apply str node)
+      node)))
+
+(def citypop-data
+  (let [fields [:name :kind :cases-02-29 :cases-03-04 :cases-03-08 :cases-03-12 :cases-03-16 :cases-03-20]]
+    (mapcat (fn [[state counties]]
+              (let [state-name (-> (s/select (s/attr :data-wiki) state) first :attrs :data-wiki)]
+                (map (fn [county]
+                       (assoc
+                        (zipmap fields
+                                (butlast (map deepest-content (s/select (s/tag :td) county))))
+                        :part-of state-name))
+                     (s/select (s/tag :tr) counties))))
+            (butlast (partition 2 (s/select (s/tag :tbody) covid-page))))))
 
 (def normalize-bundesland
   "Mappings to normalize English/German and typographic variation to standard German spelling.
