@@ -22,7 +22,7 @@
                       {:header? true
                        :fields [{:field :state
                                  :postprocess-fn #(get normalize-bundesland % %)}
-                                {:skip 7}
+                                nil nil nil nil nil nil nil
                                 {:field :latest-population
                                  :type :int
                                  :preprocess-fn #(-> % string/trim (string/replace "," ""))}]})
