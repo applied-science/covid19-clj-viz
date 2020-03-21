@@ -53,7 +53,7 @@
   (reduce (fn [acc [bundesland cases]]
             (assoc acc
                    bundesland
-                   {:state-or-province bundesland
+                   {:state-province bundesland
                     :population (population bundesland)
                     :cases cases
                     :cases-per-100k (double (/ cases (/ (population bundesland)
@@ -103,7 +103,7 @@
                  {:null #{"..."}
                   :fields [:name :status
                            "2020-02-29" "2020-03-04" "2020-03-08"
-                           "2020-03-12" "2020-03-16" "2020-03-19"]}))
+                           {:field "2020-03-12" :type :int} "2020-03-16" "2020-03-19"]}))
 
 (comment
   ;;;; More looking
@@ -142,8 +142,15 @@
        (filter (comp #{"Brandenburg"} :state))
        (remove (comp #{"State"} :status))
        (map (fn [m] {(:name m) (get m "2020-03-19")}))
-       (apply merge)
-       (sort-by val >))  
+       (apply merge))  
 
+  ;; ...same, as datapoints for 
+  (->> hm-cases
+       (filter (comp #{"Brandenburg"} :state))
+       (remove (comp #{"State"} :status))
+       (sort-by #(get % "2020-03-19") >))
+
+
+  ;; What about cases across Germany?
   
   )

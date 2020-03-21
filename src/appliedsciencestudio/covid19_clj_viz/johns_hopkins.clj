@@ -1,13 +1,28 @@
 (ns appliedsciencestudio.covid19-clj-viz.johns-hopkins
   "Johns Hopkins COVID19 data sources, with util fns"
   (:require [appliedsciencestudio.covid19-clj-viz.world-bank :as world-bank]
-            [clojure.data.csv :as csv])
+            [clojure.data.csv :as csv]
+            [clojure.string :as string])
   (:import [java.time LocalDate]
            [java.time.format DateTimeFormatter]))
 
+(defn parse-covid19-date [mm-dd-yy]
+  (LocalDate/parse mm-dd-yy (DateTimeFormatter/ofPattern "M/d/yy")))
+
+;; TODO get rid of this; long live `meta-csv`
 (def covid19-confirmed-csv
   "From https://github.com/CSSEGISandData/COVID-19/tree/master/who_covid_19_situation_reports"
   (csv/read-csv (slurp "resources/COVID-19/csse_covid_19_data/csse_covid_19_time_series/time_series_19-covid-Confirmed.csv")))
+
+(def covid19-confirmed-csv2
+  "From https://github.com/CSSEGISandData/COVID-19/tree/master/who_covid_19_situation_reports"
+  (mcsv/read-csv "resources/COVID-19/csse_covid_19_data/csse_covid_19_time_series/time_series_19-covid-Confirmed.csv"
+                 {:field-names-fn (fn [s] (if (#{"Province/State" "Country/Region" "Lat" "Long"} s)
+                                           (-> s
+                                               string/lower-case
+                                               (string/replace "/" "-")
+                                               keyword)
+                                           (str (parse-covid19-date s))))}))
 
 (def covid19-recovered-csv
   "From https://github.com/CSSEGISandData/COVID-19/tree/master/who_covid_19_situation_reports"
@@ -26,9 +41,6 @@
               :deaths    covid19-deaths-csv
               :confirmed covid19-confirmed-csv)]
    (some (comp #{country} second) rows)))
-
-(defn parse-covid19-date [mm-dd-yy]
-  (LocalDate/parse mm-dd-yy (DateTimeFormatter/ofPattern "M/d/yy")))
 
 (defn country-totals
   "Aggregates given data for `country`, possibly spread across

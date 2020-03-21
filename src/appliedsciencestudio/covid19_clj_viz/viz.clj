@@ -93,21 +93,22 @@
 ;;;; Geographic visualization of cases in each Germany state, shaded proportional to population
 (oz/view!
  (merge-with merge oz-config germany-dimensions
-             {:title {:text "COVID19 cases in Germany, by state, per 100k inhabitants"}
-              :data {:name "germany"
-                     ;; FIXME this keeps getting cached somewhere in Firefox or Oz
-                     ;; :url "/public/data/deutschland-bundeslaender.geo.json",
-                     :values deutschland-geojson-with-data
-                     :format {:property "features"}},
-              :mark {:type "geoshape" :stroke "white" :strokeWidth 1}
-              :encoding {:color {:field "Cases-per-100k",
-                                 :type "quantitative"
-                                 :scale {:domain [0
-                                                  ;; NB: compare Hubei's 111 to German maximum. (It was 0.5 when I started this project, and ~1 now.)
-                                                  (apply max (map :cases-per-100k (vals deutschland/bundeslaender-data)))]}}
-                         :tooltip [{:field "Bundesland" :type "nominal"}
-                                   {:field "Cases" :type "quantitative"}]}
-              :selection {:highlight {:on "mouseover" :type "single"}}}))
+             :title {:text "COVID19 cases in Germany, by state, per 100k inhabitants"}
+             :data {:name "germany"
+                    ;; FIXME this keeps getting cached somewhere in Firefox or Oz
+                    ;; :url "/public/data/deutschland-bundeslaender.geo.json",
+                    :values deutschland-geojson-with-data
+                    :format {:property "features"}},
+             :mark {:type "geoshape" :stroke "white" :strokeWidth 1}
+             :encoding {:color {:field "Cases-per-100k",
+                                :type "quantitative"
+                                :scale {:domain [0
+                                                 ;; NB: compare Hubei's 111 to German maximum. (It was 0.5 when I started this project, and ~1 now.)
+                                                 (apply max (map :cases-per-100k (vals deutschland/bundeslaender-data)))]}}
+                        :tooltip [{:field "Bundesland" :type "nominal"}
+                                  {:field "Cases" :type "quantitative"}]}
+
+             :selection {:highlight {:on "mouseover" :type "single"}}))
 
 
 ;;;; ===========================================================================
@@ -139,7 +140,22 @@
 ;; (with or without the outlier that is China's Hubei province)
 (oz/view! (merge oz-config barchart-dimensions
                  {:title "Confirmed COVID19 cases in China and Germany",
-                  :data {:values (->> jh/covid19-confirmed-csv
+                  :data {:values (let [date "2020-03-19"]
+                                   (->> jh/covid19-confirmed-csv2
+                                        ;; Notice improved readability from working with seq of maps:
+                                        (map #(select-keys % [:province-state :country-region date]))
+                                        (filter (comp #{"China" "Mainland China" "Germany"} :country-region))
+                                        (reduce (fn [acc m]
+                                                  (conj acc {:state-province (if (string/blank? (:province-state m))
+                                                                               "(All German federal states)"  
+                                                                               (:province-state m))
+                                                             :cases (get m date)}))
+                                                [])
+                                        (concat (sort-by :state-province (vals deutschland/bundeslaender-data)))
+                                        ;; ;; FIXME this is the line to toggle:
+                                        #_(remove (comp #{"Hubei"} :state-province))
+                                        (sort-by :cases)))
+                         #_(->> jh/covid19-confirmed-csv
                                       rest
                                       ;; grab only province/state, country, and latest report of total cases:
                                       (map (juxt first second last))
@@ -161,8 +177,34 @@
                                       #_ (sort-by :cases))},
                   :mark {:type "bar" :color "#9085DA"}
                   :encoding {:x {:field "cases", :type "quantitative"}
-                             :y {:field "state-or-province", :type "ordinal"
+                             :y {:field "state-province", :type "ordinal"
                                  :sort nil}}}))
+
+
+(comment
+
+  ;;;; We switch now to a better data source
+  (let [date "2020-03-19"]
+    (->> jh/covid19-confirmed-csv2
+         ;; Notice improved readability from working with seq of maps:
+        (map #(select-keys % [:province-state :country-region date]))
+        (filter (comp #{"China" "Mainland China" "Germany"} :country-region))
+        (reduce (fn [acc m]
+                  (conj acc {:state-province (if (string/blank? (:province-state m))
+                                               "(All German federal states)"  
+                                               (:province-state m))
+                             :cases (get m date)}))
+                [])
+        (concat (sort-by :state-province (vals deutschland/bundeslaender-data)))
+        ;; ;; FIXME this is the line to toggle:
+        (remove (comp #{"Hubei"} :state-or-province))
+        (sort-by :cases)))
+  
+
+  )
+
+
+
 
 
 ;;;; ===========================================================================
@@ -396,3 +438,54 @@
                          :tooltip [{:field "country" :type "nominal"}
                                    {:field "confirmed-rate" :type "quantitative"}]}
               :selection {:highlight {:on "mouseover" :type "single"}}}))
+
+
+
+;;;; ===========================================================================
+;;;; Livecoding
+
+;;;; Bar chart ready to fill in
+(oz/view!
+ (merge oz-config barchart-dimensions
+        {:title {:text "TODO"}
+         :data {:values TODO},
+         :mark {:type "bar" :color (:green applied-science-palette)}
+         :encoding {:x {:field "TODO", :type "quantitative"}
+                    :y {:field "TODO", :type "ordinal"
+                        :sort nil}}}))
+
+;;;; Line chart
+(oz/view!
+ (merge-with
+  merge oz-config
+  {:title {:text "TODO"}
+   :width 1200 :height 700
+   :data {:values TODO}
+   :mark {:type "line" :strokeWidth 4 :point "transparent"}
+   :encoding {:x {:field "TODO", :type "temporal"},
+              :y {:field "TODO", :type "quantitative"}
+              :color {:field "TODO", :type "nominal"}
+              :tooltip {:field "TODO", :type "nominal"}}}))
+
+
+(oz/view!
+ (merge-with
+  merge oz-config
+  {:title {:text "TODO"}
+   :width 1200 :height 700
+   :data {:values
+          (->> deutschland/hm-cases
+               (filter (comp #{"County"} :status))
+               (reduce (fn [acc m]
+                         (apply conj acc
+                                (map (fn [[d n]]
+                                       {:date d
+                                        :cases n
+                                        :place (:name m)})
+                                     (dissoc m :name :state :status))))
+                       []))}
+   :mark {:type "line" :strokeWidth 4 :point "transparent"}
+   :encoding {:x {:field "date", :type "temporal"},
+              :y {:field "cases", :type "quantitative"}
+              :color {:field "place", :type "nominal"}
+              :tooltip {:field "place", :type "nominal"}}}))
