@@ -17,6 +17,7 @@
         keyword)
     (str (parse-covid19-date s))))
 
+;; TODO rename these
 (def covid19-confirmed-csv
   "From https://github.com/CSSEGISandData/COVID-19/tree/master/who_covid_19_situation_reports"
   (mcsv/read-csv "resources/COVID-19/csse_covid_19_data/csse_covid_19_time_series/time_series_19-covid-Confirmed.csv"
@@ -36,12 +37,7 @@
   (drop 4 (map first (first covid19-confirmed-csv))))
 
 (def last-reported-date
-  (->> covid19-confirmed-csv
-       first
-       keys
-       (remove keyword?)
-       (sort #(compare %2 %1))
-       first))
+  (key (last (first covid19-confirmed-csv))))
 
 (def countries
   (set (map :country-region covid19-confirmed-csv)))
