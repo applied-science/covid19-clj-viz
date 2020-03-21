@@ -25,7 +25,7 @@
           :features
           (fn [features]
             (mapv (fn [feature]
-                    (let [cases (nth (first(filter (comp #{"LIMA"} first)
+                    (let [cases (nth (first(filter (comp #{(:NOMBDEP (:properties feature))} first)
                                                        southamerica/peru-cases)) 1)]
                       (assoc feature
                       :Name (:NOMBDEP (:properties feature))
