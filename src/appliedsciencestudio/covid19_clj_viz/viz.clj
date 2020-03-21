@@ -30,7 +30,7 @@
             (mapv (fn [feature]
                     (assoc feature
                            :Bundesland     (:NAME_1 (:properties feature))
-                           :Cases          (get deutschland/cases (:NAME_1 (:properties feature)) 0)
+                           :Cases          (get-in deutschland/bundeslaender-data [(:NAME_1 (:properties feature)) :cases] 0)
                            :Population     (get deutschland/population (get deutschland/normalize-bundesland (:NAME_1 (:properties feature)) (:NAME_1 (:properties feature))))
                            :Cases-per-100k (get-in deutschland/bundeslaender-data [(:NAME_1 (:properties feature)) :cases-per-100k] 0)))
                   features))))
@@ -108,7 +108,6 @@
                          :tooltip [{:field "Bundesland" :type "nominal"}
                                    {:field "Cases" :type "quantitative"}]}
               :selection {:highlight {:on "mouseover" :type "single"}}}))
-
 
 ;;;; ===========================================================================
 ;;;; Deceptive version of that same map

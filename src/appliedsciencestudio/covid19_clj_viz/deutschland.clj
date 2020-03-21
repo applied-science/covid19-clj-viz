@@ -66,7 +66,3 @@
                         (-> (reduce (fn [m k] (update m k parse-german-number)) % (keys %))
                             (assoc :population (population normed-bundesland))))))
        (into {})))
-
-;; no longer needed because this information is also in the bundeslaender-data
-(def cases
-  (into {} (map (juxt :bundesland :cases) (vals bundeslaender-data))))
