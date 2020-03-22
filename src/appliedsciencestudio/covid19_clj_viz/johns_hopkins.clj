@@ -19,17 +19,20 @@
 
 ;; TODO rename these
 (def covid19-confirmed-csv
-  "From https://github.com/CSSEGISandData/COVID-19/tree/master/who_covid_19_situation_reports"
+  "From https://github.com/CSSEGISandData/COVID-19/tree/master/who_covid_19_situation_reports
+   Existence of this file relies on cloning Johns Hopkins repo into resources directory. See README."
   (mcsv/read-csv "resources/COVID-19/csse_covid_19_data/csse_covid_19_time_series/time_series_19-covid-Confirmed.csv"
                  {:field-names-fn field-names}))
 
 (def covid19-recovered-csv
-  "From https://github.com/CSSEGISandData/COVID-19/tree/master/who_covid_19_situation_reports"
+  "From https://github.com/CSSEGISandData/COVID-19/tree/master/who_covid_19_situation_reports
+   Existence of this file relies on cloning Johns Hopkins repo into resources directory. See README."
   (mcsv/read-csv "resources/COVID-19/csse_covid_19_data/csse_covid_19_time_series/time_series_19-covid-Recovered.csv"
                  {:field-names-fn field-names}))
 
 (def covid19-deaths-csv
-  "From https://github.com/CSSEGISandData/COVID-19/tree/master/who_covid_19_situation_reports"
+  "From https://github.com/CSSEGISandData/COVID-19/tree/master/who_covid_19_situation_reports
+   Existence of this file relies on cloning Johns Hopkins repo into resources directory. See README."
   (mcsv/read-csv "resources/COVID-19/csse_covid_19_data/csse_covid_19_time_series/time_series_19-covid-Deaths.csv"
                  {:field-names-fn field-names}))
 
