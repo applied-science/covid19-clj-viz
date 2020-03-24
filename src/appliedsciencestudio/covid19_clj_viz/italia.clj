@@ -2,11 +2,57 @@
   "Following Alan Marazzi's 'The Italian COVID-19 situation' [1] with orthodox Clojure rather than Panthera
 
   Run it in NextJournal at https://nextjournal.com/alan/getting-started-with-italian-data-on-covid-19
-  
+
   [1] https://alanmarazzi.gitlab.io/blog/posts/2020-3-19-italy-covid/"
   (:require [clojure.data.csv :as csv]
             [meta-csv.core :as mcsv]
             [clojure.string :as string]))
+
+;; TODO: Temp data for testing
+
+{"Hamburg"
+ {:bundesland "Hamburg"
+  :cases 432
+  :difference-carried-forward 74
+  :cases-per-100k 23.46
+  :deaths 0
+  :particularly-affected-areas nil}
+ "Schleswig-Holstein"
+ {:bundesland "Schleswig-Holstein"
+  :cases 202
+  :difference-carried-forward 43
+  :cases-per-100k 6.97
+  :deaths 0
+  :particularly-affected-areas nil}
+ "Rheinland-Pfalz"
+ {:bundesland "Rheinland-Pfalz"
+  :cases 637
+  :difference-carried-forward 163
+  :cases-per-100k 15.59
+  :deaths 0
+  :particularly-affected-areas nil}}
+
+(def province-data  {"Pavia"
+                     {:prov_name "Pavia"
+                      :cases 432
+                      :difference-carried-forward 74
+                      :cases-per-100k 23.46
+                      :deaths 0
+                      :particularly-affected-areas nil}
+                     "Torino"
+                     {:prov_name "Torino"
+                      :cases 202
+                      :difference-carried-forward 43
+                      :cases-per-100k 6.97
+                      :deaths 0
+                      :particularly-affected-areas nil}
+                     "Alessandria"
+                     {:prov_name "Alessandria"
+                      :cases 637
+                      :difference-carried-forward 163
+                      :cases-per-100k 15.59
+                      :deaths 0
+                      :particularly-affected-areas nil}})
 
 ;; We can get province data out of Italy's CSV data using the orthodox
 ;; Clojure approach, `clojure.data.csv`:
@@ -41,7 +87,7 @@
    "totale_ospedalizzati"        :tot-hospitalized
    "isolamento_domiciliare"      :quarantined
    "totale_attualmente_positivi" :tot-positives
-   "nuovi_attualmente_positivi"  :new-positives 
+   "nuovi_attualmente_positivi"  :new-positives
    "dimessi_guariti"             :recovered
    "deceduti"                    :dead
    "tamponi"                     :tests})
@@ -58,7 +104,7 @@
 
   (keys (first provinces2))
 
-  
+
   ;;;; I often use an alternative approach when reading CSVs,
   ;;;; transforming rather than replacing the header:
   (let [[hdr & rows] (csv/read-csv (slurp "resources/Italia-COVID-19/dati-province/dpc-covid19-ita-province.csv"))]
@@ -66,16 +112,16 @@
          (repeat (map (comp keyword #(string/replace % "_" "-")) hdr))
          rows))
 
-  
+
   ;;;; Check the data
   ;; Do we have the right number of provinces?
   (count (distinct (map :province-name provinces))) ;; be sure to evaluate the inner forms as well
 
   ;; No, there's an extra "In fase di definizione/aggiornamento", or cases not attributed to a province.
-  
+
   ;; Let's ignore those.
   (remove (comp #{"In fase di definizione/aggiornamento"} :province-name) provinces)
-  
+
   )
 
 
@@ -129,5 +175,5 @@
           []
           (partition 2 1 (conj (sort-by :date tests-by-date)
                                {:tests 0})))
-  
+
   )
