@@ -8,52 +8,6 @@
             [meta-csv.core :as mcsv]
             [clojure.string :as string]))
 
-;; TODO: Temp data for testing
-
-{"Hamburg"
- {:bundesland "Hamburg"
-  :cases 432
-  :difference-carried-forward 74
-  :cases-per-100k 23.46
-  :deaths 0
-  :particularly-affected-areas nil}
- "Schleswig-Holstein"
- {:bundesland "Schleswig-Holstein"
-  :cases 202
-  :difference-carried-forward 43
-  :cases-per-100k 6.97
-  :deaths 0
-  :particularly-affected-areas nil}
- "Rheinland-Pfalz"
- {:bundesland "Rheinland-Pfalz"
-  :cases 637
-  :difference-carried-forward 163
-  :cases-per-100k 15.59
-  :deaths 0
-  :particularly-affected-areas nil}}
-
-#_(def province-data  {"Pavia"
-                     {:prov_name "Pavia"
-                      :cases 432
-                      :difference-carried-forward 74
-                      :cases-per-100k 23.46
-                      :deaths 0
-                      :particularly-affected-areas nil}
-                     "Torino"
-                     {:prov_name "Torino"
-                      :cases 202
-                      :difference-carried-forward 43
-                      :cases-per-100k 6.97
-                      :deaths 0
-                      :particularly-affected-areas nil}
-                     "Alessandria"
-                     {:prov_name "Alessandria"
-                      :cases 637
-                      :difference-carried-forward 163
-                      :cases-per-100k 15.59
-                      :deaths 0
-                      :particularly-affected-areas nil}})
-
 ;; We can get province data out of Italy's CSV data using the orthodox
 ;; Clojure approach, `clojure.data.csv`:
 (def provinces
@@ -94,7 +48,7 @@
 
 ;; Now we can just read the CSV.
 (def provinces2
-  (mcsv/read-csv "resources/Italia-COVID-19/dati-province/dpc-covid19-ita-province.csv"
+  (mcsv/read-csv "resources/Italia-COVID-19/dati-province/dpc-covid19-ita-province-latest.csv"
                  {:field-names-fn fields-it->en}))
 
 (comment
@@ -110,7 +64,7 @@
   (let [[hdr & rows] (csv/read-csv (slurp "resources/Italia-COVID-19/dati-province/dpc-covid19-ita-province.csv"))]
     (map zipmap
          (repeat (map (comp keyword #(string/replace % "_" "-")) hdr))
-         rows))
+         rows))q
 
 
   ;;;; Check the data
@@ -193,20 +147,20 @@
                (:population)
                (assoc % :population))) all-province-data))
 
-;; TODO: Fix bug that puts 0s in cases-per-100k when population is missing
 (defn compute-cases-per-100k [province-data-with-pop]
   (map #(let [cases (% :cases)
               population (% :population)
               calc-cases (fn [x] (double (/ cases x)))
               per-100k (fn [x] (/ x 100000))]
-          (->> (if population ((comp calc-cases per-100k) population) 0)
+          (->> (if population ((comp calc-cases per-100k) population) nil)
                (assoc % :cases-per-100k))) province-data-with-pop))
 
 (def province-populations
-  "From http://en.comuni-italiani.it/province.html"
+  "From http://www.comuni-italiani.it/province.html"
   (-> (mcsv/read-csv "resources/italy.province-population.csv" {:fields [:province-name :population :abbreviation]})
       conform-to-province-name))
 
-(def province-data (-> (add-population-to-province provinces2 province-populations)
+(def province-data (-> (remove (comp #{"In fase di definizione/aggiornamento"} :province-name) provinces2)
+                       (add-population-to-province province-populations)
                        (compute-cases-per-100k)
                        (conform-to-province-name)))

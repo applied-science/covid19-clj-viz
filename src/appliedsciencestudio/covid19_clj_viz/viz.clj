@@ -106,7 +106,7 @@
 
 (oz/view!
  (merge-with merge oz-config germany-dimensions
-             {:title {:text "COVID19 cases in Italy, by state, per 100k inhabitants"}
+             {:title {:text "COVID19 cases in Italy, by province, per 100k inhabitants"}
               :data {:name "italy"
                      ;; FIXME this keeps getting cached somewhere in Firefox or Oz
                      ;; :url "/public/data/deutschland-bundeslaender.geo.json",
