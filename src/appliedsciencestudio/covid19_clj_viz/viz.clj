@@ -36,11 +36,6 @@
                            :Cases-per-100k (get-in deutschland/bundeslaender-data [(:NAME_1 (:properties feature)) :cases-per-100k] 0)))
                   features))))
 
-(def italia-geojson
-  "source of map: https://github.com/openpolis/geojson-italy/blob/master/geojson/limits_IT_provinces.geojson"
-  (json/read-value (java.io.File. "resources/public/public/data/limits_IT_provinces-original.geo.json")
-                   (json/object-mapper {:decode-key-fn true})))
-
 (def italia-geojson-with-data
     (update (json/read-value (java.io.File. "resources/public/public/data/limits_IT_provinces-original.geo.json")
                            (json/object-mapper {:decode-key-fn true}))
@@ -49,8 +44,20 @@
             (mapv (fn [feature]
                     (assoc feature
                            :prov_name     (:prov_name (:properties feature))
-                           :Cases          (get-in italia/province-data [(:NAME_1 (:properties feature)) :cases] 0)
-                           :Cases-per-100k (get-in italia/province-data [(:NAME_1 (:properties feature)) :cases-per-100k] 0)))
+                           :Cases          (get-in italia/province-data [(:prov_name (:properties feature)) :cases] 0)
+                           :Cases-per-100k (get-in italia/province-data [(:prov_name (:properties feature)) :cases-per-100k] 0)))
+                  features))))
+
+(def italia-geojson-with-data
+  (update (json/read-value (java.io.File. "resources/public/public/data/limits_IT_provinces-original.geo.json")
+                           (json/object-mapper {:decode-key-fn true}))
+          :features
+          (fn [features]
+            (mapv (fn [feature]
+                    (assoc feature
+                           :prov_name     (:prov_name (:properties feature))
+                           :Cases          (:cases (:properties feature))
+                           :Cases-per-100k (get-in italia/provinces2 [(:prov_name (:properties feature)) :cases-per-100k] 0)))
                   features))))
 
 (comment

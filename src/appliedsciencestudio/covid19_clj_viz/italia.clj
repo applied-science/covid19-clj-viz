@@ -32,7 +32,7 @@
   :deaths 0
   :particularly-affected-areas nil}}
 
-(def province-data  {"Pavia"
+#_(def province-data  {"Pavia"
                      {:prov_name "Pavia"
                       :cases 432
                       :difference-carried-forward 74
@@ -177,3 +177,30 @@
                                {:tests 0})))
 
   )
+
+
+(defn conform-to-province-name
+  ""
+  [provinces]
+  (->> (map #(vector (:province-name %) %) provinces)
+       (into {})))
+
+(defn add-population-to-province
+  ""
+  [all-province-data all-province-populations]
+  (map #(let [province-to-update (% :province-name)]
+          (->> (all-province-populations province-to-update)
+               (:population)
+               (assoc % :population))) all-province-data))
+
+(defn compute-cases-per-100k [province-data-with-pop]
+  (map #(assoc % :cases-per-100k 0) province-data-with-pop))
+
+(def province-populations
+  "From http://en.comuni-italiani.it/province.html"
+  (-> (mcsv/read-csv "resources/italy.province-population.csv" {:fields [:province-name :population :abbreviation]})
+      conform-to-province-name))
+
+(def province-data (-> (add-population-to-province provinces2 province-populations)
+                       (compute-cases-per-100k)
+                       (conform-to-province-name)))
