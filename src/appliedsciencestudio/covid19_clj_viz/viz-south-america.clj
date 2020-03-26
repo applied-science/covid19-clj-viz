@@ -81,10 +81,8 @@
               :mark {:type "geoshape" :stroke "white" :strokeWidth 1}
               :encoding {:color {:field "Cases",
                                  :type "quantitative"
-                                 :scale {:range [(:white applied-science-palette)
-                                                 (:blue applied-science-palette)
-                                                 (:purple applied-science-palette)
-                                                 ]}}
+                                 :condition {:test "datum['Cases'] == 0" :value "#F3F3F3"}
+                                 }
                          :tooltip [
                                    {:field "Cases" :type "quantitative"}]}
               :selection {:highlight {:on "mouseover" :type "single"}}}))
