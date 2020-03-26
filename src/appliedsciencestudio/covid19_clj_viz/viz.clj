@@ -48,18 +48,6 @@
                            :Cases-per-100k (get-in italia/province-data [(:prov_name (:properties feature)) :cases-per-100k] 0)))
                   features))))
 
-(def italia-geojson-with-data
-  (update (json/read-value (java.io.File. "resources/public/public/data/limits_IT_provinces-original.geo.json")
-                           (json/object-mapper {:decode-key-fn true}))
-          :features
-          (fn [features]
-            (mapv (fn [feature]
-                    (assoc feature
-                           :prov_name     (:prov_name (:properties feature))
-                           :Cases          (:cases (:properties feature))
-                           :Cases-per-100k (get-in italia/provinces2 [(:prov_name (:properties feature)) :cases-per-100k] 0)))
-                  features))))
-
 (comment
 
   ;;;; Create new GeoJSONs with COVID19 data added

@@ -193,8 +193,14 @@
                (:population)
                (assoc % :population))) all-province-data))
 
+;; TODO: Fix bug that puts 0s in cases-per-100k when population is missing
 (defn compute-cases-per-100k [province-data-with-pop]
-  (map #(assoc % :cases-per-100k 0) province-data-with-pop))
+  (map #(let [cases (% :cases)
+              population (% :population)
+              calc-cases (fn [x] (double (/ cases x)))
+              per-100k (fn [x] (/ x 100000))]
+          (->> (if population ((comp calc-cases per-100k) population) 0)
+               (assoc % :cases-per-100k))) province-data-with-pop))
 
 (def province-populations
   "From http://en.comuni-italiani.it/province.html"
