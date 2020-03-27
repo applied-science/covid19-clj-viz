@@ -36,17 +36,7 @@
                            :Cases-per-100k (get-in deutschland/bundeslaender-data [(:NAME_1 (:properties feature)) :cases-per-100k] 0)))
                   features))))
 
-(def italia-geojson-with-data
-    (update (json/read-value (java.io.File. "resources/public/public/data/limits_IT_provinces-original.geo.json")
-                           (json/object-mapper {:decode-key-fn true}))
-          :features
-          (fn [features]
-            (mapv (fn [feature]
-                    (assoc feature
-                           :prov_name     (:prov_name (:properties feature))
-                           :Cases          (get-in italia/province-data [(:prov_name (:properties feature)) :cases] 0)
-                           :Cases-per-100k (get-in italia/province-data [(:prov_name (:properties feature)) :cases-per-100k] 0)))
-                  features))))
+
 
 (comment
 
@@ -104,6 +94,18 @@
 ;;;; ===========================================================================
 ;;;; Show the Italian map
 
+(def italia-geojson-with-data
+  (update (json/read-value (java.io.File. "resources/public/public/data/limits_IT_regions-original.geo.json")
+                           (json/object-mapper {:decode-key-fn true}))
+          :features
+          (fn [features]
+            (mapv (fn [feature]
+                    (assoc feature
+                           :reg_name     (:reg_name (:properties feature))
+                           :Cases          (get-in italia/region-data [(:reg_name (:properties feature)) :cases] 0)
+                           :Cases-per-100k (get-in italia/region-data [(:reg_name (:properties feature)) :cases-per-100k] 0)))
+                  features))))
+
 (oz/view!
  (merge-with merge oz-config germany-dimensions
              {:title {:text "COVID19 cases in Italy, by province, per 100k inhabitants"}
@@ -117,8 +119,8 @@
                                  :type "quantitative"
                                  :scale {:domain [0
                                                   ;; NB: compare Hubei's 111 to German maximum. (It was 0.5 when I started this project, and ~1 now.)
-                                                  (apply max (map :cases-per-100k (vals italia/province-data)))]}}
-                         :tooltip [{:field "prov_name" :type "nominal"}
+                                                  (apply max (map :cases-per-100k (vals italia/region-data)))]}}
+                         :tooltip [{:field "reg_name" :type "nominal"}
                                    {:field "Cases" :type "quantitative"}]}
               :selection {:highlight {:on "mouseover" :type "single"}}}))
 

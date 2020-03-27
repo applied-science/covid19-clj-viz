@@ -152,7 +152,7 @@
               population (% :population)
               calc-cases (fn [x] (double (/ cases x)))
               per-100k (fn [x] (/ x 100000))]
-          (->> (if population ((comp calc-cases per-100k) population) nil)
+          (->> (if population ((comp calc-cases per-100k) population) 0) ;; TODO: change from nil
                (assoc % :cases-per-100k))) province-data-with-pop))
 
 (def region-populations
@@ -166,7 +166,23 @@
   (-> (mcsv/read-csv "resources/italy.province-population.csv" {:fields [:province-name :population :abbreviation]})
       (conform-to-territory-name :province-name)))
 
-(def region-data "For use with resources/public/public/data/limits_IT_regions-original.geo.json" nil)
+
+
+(def regions
+  (mcsv/read-csv "resources/Italia-COVID-19/dati-regioni/dpc-covid19-ita-regioni-latest.csv"
+                 {:field-names-fn fields-it->en}))
+
+(defn add-population-to-territories
+  ""
+  [all-territory-data all-territory-population territory-key]
+  (map #(let [territory-to-update (% territory-key)]
+          (->> (all-territory-population territory-to-update)
+               (:population)
+               (assoc % :population))) all-territory-data))
+
+(def region-data "For use with resources/public/public/data/limits_IT_regions-original.geo.json" (-> (add-population-to-territories regions region-populations :region-name)
+                                                                                                     (compute-cases-per-100k)
+                                                                                                     (conform-to-territory-name :region-name)))
 
 (def province-data
   "For use with resources/public/public/data/limits_IT_provinces-original.geo.json"
