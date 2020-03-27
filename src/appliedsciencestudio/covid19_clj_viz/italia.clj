@@ -133,10 +133,10 @@
   )
 
 
-(defn conform-to-province-name
+(defn conform-to-territory-name
   ""
-  [provinces]
-  (->> (map #(vector (:province-name %) %) provinces)
+  [territories territory-key]
+  (->> (map #(vector (territory-key %) %) territories)
        (into {})))
 
 (defn add-population-to-province
@@ -155,13 +155,22 @@
           (->> (if population ((comp calc-cases per-100k) population) nil)
                (assoc % :cases-per-100k))) province-data-with-pop))
 
+(def region-populations
+  "From http://www.comuni-italiani.it/province.html."
+  (-> (mcsv/read-csv "resources/italy.region-population.csv" {:fields [:region-name :population :number-of-provinces]})
+      (conform-to-territory-name :region-name)))
+
 (def province-populations
   "From http://www.comuni-italiani.it/province.html. Italy changed how provinces are structured in Sardina in 2016.
    Some are manually updated using the data here: https://en.wikipedia.org/wiki/Provinces_of_Italy"
   (-> (mcsv/read-csv "resources/italy.province-population.csv" {:fields [:province-name :population :abbreviation]})
-      conform-to-province-name))
+      (conform-to-territory-name :province-name)))
 
-(def province-data (-> (remove (comp #{"In fase di definizione/aggiornamento"} :province-name) provinces2)
+(def region-data "For use with resources/public/public/data/limits_IT_regions-original.geo.json" nil)
+
+(def province-data
+  "For use with resources/public/public/data/limits_IT_provinces-original.geo.json"
+  (-> (remove (comp #{"In fase di definizione/aggiornamento"} :province-name) provinces2)
                        (add-population-to-province province-populations)
                        (compute-cases-per-100k)
-                       (conform-to-province-name)))
+                       (conform-to-territory-name :province-name)))
