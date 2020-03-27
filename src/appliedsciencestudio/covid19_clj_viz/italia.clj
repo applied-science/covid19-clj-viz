@@ -156,7 +156,8 @@
                (assoc % :cases-per-100k))) province-data-with-pop))
 
 (def province-populations
-  "From http://www.comuni-italiani.it/province.html"
+  "From http://www.comuni-italiani.it/province.html. Italy changed how provinces are structured in Sardina in 2016.
+   Some are manually updated using the data here: https://en.wikipedia.org/wiki/Provinces_of_Italy"
   (-> (mcsv/read-csv "resources/italy.province-population.csv" {:fields [:province-name :population :abbreviation]})
       conform-to-province-name))
 
