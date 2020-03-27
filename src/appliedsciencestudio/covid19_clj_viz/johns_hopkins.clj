@@ -21,19 +21,19 @@
 (def covid19-confirmed-csv
   "From https://github.com/CSSEGISandData/COVID-19/tree/master/who_covid_19_situation_reports
    Existence of this file relies on cloning Johns Hopkins repo into resources directory. See README."
-  (mcsv/read-csv "resources/COVID-19/csse_covid_19_data/csse_covid_19_time_series/time_series_19-covid-Confirmed.csv"
+  (mcsv/read-csv "resources/COVID-19/csse_covid_19_data/csse_covid_19_time_series/time_series_covid19_confirmed_global.csv"
                  {:field-names-fn field-names}))
 
 (def covid19-recovered-csv
   "From https://github.com/CSSEGISandData/COVID-19/tree/master/who_covid_19_situation_reports
    Existence of this file relies on cloning Johns Hopkins repo into resources directory. See README."
-  (mcsv/read-csv "resources/COVID-19/csse_covid_19_data/csse_covid_19_time_series/time_series_19-covid-Recovered.csv"
+  (mcsv/read-csv "resources/COVID-19/csse_covid_19_data/csse_covid_19_time_series/time_series_covid19_recovered_global.csv"
                  {:field-names-fn field-names}))
 
 (def covid19-deaths-csv
   "From https://github.com/CSSEGISandData/COVID-19/tree/master/who_covid_19_situation_reports
    Existence of this file relies on cloning Johns Hopkins repo into resources directory. See README."
-  (mcsv/read-csv "resources/COVID-19/csse_covid_19_data/csse_covid_19_time_series/time_series_19-covid-Deaths.csv"
+  (mcsv/read-csv "resources/COVID-19/csse_covid_19_data/csse_covid_19_time_series/time_series_covid19_deaths_global.csv"
                  {:field-names-fn field-names}))
 
 (def csv-dates
