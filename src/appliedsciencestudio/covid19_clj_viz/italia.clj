@@ -96,11 +96,6 @@
                     (fn [m] (update m :new-positives #(Integer/parseInt %)))
                     (fn [m] (update m :tests #(Integer/parseInt %))))))))
 
-;; Or use `meta-csv` so it comes out as a seq of maps:
-(def regions
-  (mcsv/read-csv "resources/Italia-COVID-19/dati-regioni/dpc-covid19-ita-regioni.csv"
-                 {:field-names-fn fields-it->en}))
-
 
 ;;;; Calculate daily changes
 ;; Now we want to determine how many new tests were performed each
@@ -132,20 +127,42 @@
 
   )
 
+(defn normalize-region-names
+  "These region names a different on the population data files, geo.json files, and the covid-19 files."
+  [region]
+  (get
+   {"Friuli Venezia Giulia" "Friuli-Venezia Giulia"
+    "Emilia Romagna" "Emilia-Romagna"
+    "Valle d'Aosta" "Valle d'Aosta/Vallée d'Aoste"} region))
+
+(defn normalize-trentino
+  "The COVID numbers from Italy split one region into two. 'P.A. Bolzano' and 'P.A. Trento' should be combined into 'Trentino-Alto Adige/Südtirol.'"
+  [region-covid-data]
+  (let [keys-to-sum [:hospitalized :icu :tot-hospitalized :quarantined :tot-positives :new-positives :recovered :dead :cases :tests]
+        regions-to-combine (filter #(or (= "P.A. Bolzano" (:region-name %)) (= "P.A. Trento" (:region-name %))) region-covid-data)
+        name-combined-region (fn [combined-regions] (assoc combined-regions :region-name "Trentino-Alto Adige/Südtirol"))
+        remove-inexact-data (fn [combined-regions] (dissoc combined-regions :lat :lon))]
+    (->> (map #(select-keys % keys-to-sum) regions-to-combine)
+         (reduce #(merge-with + %1 %2))
+         (conj (first regions-to-combine))
+         (name-combined-region)
+         (remove-inexact-data)
+         (conj region-covid-data))))
+
+(def region-covid-data
+  (->> (mcsv/read-csv "resources/Italia-COVID-19/dati-regioni/dpc-covid19-ita-regioni-latest.csv"
+                      {:field-names-fn fields-it->en})
+       (map #(update % :region-name (fn [region-name]
+                                      (if-let [update-region-name (normalize-region-names region-name)]
+                                        update-region-name
+                                        region-name))))
+       (normalize-trentino)))
 
 (defn conform-to-territory-name
-  ""
+  "Index each map of territory information by territory name."
   [territories territory-key]
   (->> (map #(vector (territory-key %) %) territories)
        (into {})))
-
-(defn add-population-to-province
-  ""
-  [all-province-data all-province-populations]
-  (map #(let [province-to-update (% :province-name)]
-          (->> (all-province-populations province-to-update)
-               (:population)
-               (assoc % :population))) all-province-data))
 
 (defn compute-cases-per-100k [province-data-with-pop]
   (map #(let [cases (% :cases)
@@ -155,8 +172,8 @@
           (->> (if population ((comp calc-cases per-100k) population) 0) ;; TODO: change from nil
                (assoc % :cases-per-100k))) province-data-with-pop))
 
-(def region-populations
-  "From http://www.comuni-italiani.it/province.html."
+(def region-population-data
+  "From http://www.comuni-italiani.it/province.html with updates to Trentino-Alto Adige/Südtirol and Valle d'Aosta/Vallée d'Aoste."
   (-> (mcsv/read-csv "resources/italy.region-population.csv" {:fields [:region-name :population :number-of-provinces]})
       (conform-to-territory-name :region-name)))
 
@@ -166,27 +183,20 @@
   (-> (mcsv/read-csv "resources/italy.province-population.csv" {:fields [:province-name :population :abbreviation]})
       (conform-to-territory-name :province-name)))
 
-
-
-(def regions
-  (mcsv/read-csv "resources/Italia-COVID-19/dati-regioni/dpc-covid19-ita-regioni-latest.csv"
-                 {:field-names-fn fields-it->en}))
-
-(defn add-population-to-territories
-  ""
-  [all-territory-data all-territory-population territory-key]
+(defn add-population-to-territories [all-territory-data all-territory-population territory-key]
   (map #(let [territory-to-update (% territory-key)]
           (->> (all-territory-population territory-to-update)
                (:population)
                (assoc % :population))) all-territory-data))
 
-(def region-data "For use with resources/public/public/data/limits_IT_regions-original.geo.json" (-> (add-population-to-territories regions region-populations :region-name)
-                                                                                                     (compute-cases-per-100k)
-                                                                                                     (conform-to-territory-name :region-name)))
+(def region-data "For use with resources/public/public/data/limits_IT_regions-original.geo.json"
+  (-> (add-population-to-territories region-covid-data region-population-data :region-name)
+      (compute-cases-per-100k)
+      (conform-to-territory-name :region-name)))
 
 (def province-data
   "For use with resources/public/public/data/limits_IT_provinces-original.geo.json"
   (-> (remove (comp #{"In fase di definizione/aggiornamento"} :province-name) provinces2)
-                       (add-population-to-province province-populations)
+                       (add-population-to-territories province-populations :province-name)
                        (compute-cases-per-100k)
                        (conform-to-territory-name :province-name)))
