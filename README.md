@@ -39,7 +39,7 @@ other, similar ways:
  - `source/*` namespaces are for parsing of source data (e.g. Johns
    Hopkins, the World Bank) into usable structures
 
-Some namespaces depend on cloning other repos into `resources. For
+Some namespaces depend on cloning other repos into `resources`. For
 instance, we put [data from Italy's Civil Protection
 Department](https://github.com/pcm-dpc/COVID-19) into
 *resources/Italia-COVID-19* to support visualizations in the `italia`
