@@ -23,22 +23,27 @@ starting there:
 1. Evaluate forms one at a time, with a browser window open next to
    your editor so you can see the visualizatons as you go
 
-Other visualizations depend on cloning other repos. For instance, we
-put [data from Italy's Civil Protection
-Department](https://github.com/pcm-dpc/COVID-19) into
-*resources/Italia-COVID-19* for visualizations in the `italia` and
-`italian-situation` namespaces.
-
 Other namespaces are for exploring and visualizing COVID-19 data in
 other, similar ways:
 
- - `italian-situation` demonstrates replicates Alan Marazzi's article [The Italian COVID-19 situation](https://alanmarazzi.gitlab.io/blog/posts/2020-3-19-italy-covid/) with orthodox Clojure rather than Panthera
- - `italia` visualizes COVID-19 case in Italy (contributed by David Schmudde)
- - `explore` is a grab-bag of general visual explorations – line & bar charts, choropleths
- - `china` and `deutschland` are for transforming country-specific data in support of visualizations
+ - `italian-situation` replicates Alan Marazzi's article [The Italian
+   COVID-19
+   situation](https://alanmarazzi.gitlab.io/blog/posts/2020-3-19-italy-covid/)
+   without Panthera, as a demonstration of using orthodox Clojure
+ - `italia` visualizes COVID-19 case in Italy *[contributed by David
+   Schmudde]*
+ - `explore` is a grab-bag of general visual explorations – line & bar
+   charts, choropleths
+ - `china` and `deutschland` are for transforming country-specific
+   data in support of visualizations
+ - `source*` namespaces are for parsing of source data (e.g. Johns
+   Hopkins, the World Bank) into usable structures
 
-Parsing of source data (e.g. Johns Hopkins, the World Bank) into a
-usable structure happens in `source*` namespaces.
+Some namespaces depend on cloning other repos into `resources. For
+instance, we put [data from Italy's Civil Protection
+Department](https://github.com/pcm-dpc/COVID-19) into
+*resources/Italia-COVID-19* to support visualizations in the `italia`
+and `italian-situation` namespaces.
 
 
 ## License
