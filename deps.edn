@@ -4,4 +4,7 @@
         ngrunwald/meta-csv {:git/url "https://github.com/ngrunwald/meta-csv"
                             :sha "58f91dfd4eb536af89ea1d69523497c747bd6554"}
         metasoarous/oz {:mvn/version "1.6.0-alpha6"} ;; for output to Vega
-        metosin/jsonista {:mvn/version "0.2.5"}}}
+        metosin/jsonista {:mvn/version "0.2.5"}
+        hickory {:mvn/version "0.7.1"}
+        hiccup {:mvn/version "1.0.5"}}
+ }
