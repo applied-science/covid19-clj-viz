@@ -1,13 +1,11 @@
 (ns appliedsciencestudio.covid19-clj-viz.china
   (:require [clojure.string :as string]
+            [appliedsciencestudio.covid19-clj-viz.sources.johns-hopkins :as jh]
             [meta-csv.core :as mcsv]))
 
 (def cases
-  ;; TODO refactor to rely on johns hopkins ns
-  "Current number of COVID19 cases in China, by province"
-  (->> (mcsv/read-csv "resources/COVID-19/csse_covid_19_data/csse_covid_19_time_series/time_series_covid19_confirmed_global.csv"
-                      ;; NB: Above file relies on cloning Johns Hopkins repo. See README.
-                      {:field-names-fn (comp keyword #(string/replace % #"/" "-") string/lower-case)})
+  "Current number of confirmed COVID19 cases in China, by province"
+  (->> jh/confirmed
        (filter (comp #{"China"} :country-region))
        (reduce (fn [m row]
                  (assoc m (:province-state row) (second (last row)))) ; most recent date
