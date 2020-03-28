@@ -1,5 +1,6 @@
 (ns appliedsciencestudio.covid19-clj-viz.article
   "Vega-lite visualizations for 'COVID19 in the REPL' article [1].
+
   Intended to be executed one form at a time, interactively in your
   editor-connected REPL. Some additional visualizations are included
   for pedagogical clarity.
@@ -10,7 +11,7 @@
   [1] http://www.appliedscience.studio/articles/covid19.html"
   (:require [appliedsciencestudio.covid19-clj-viz.china :as china]
             [appliedsciencestudio.covid19-clj-viz.deutschland :as deutschland]
-            [appliedsciencestudio.covid19-clj-viz.johns-hopkins :as jh]
+            [appliedsciencestudio.covid19-clj-viz.sources.johns-hopkins :as jh]
             [clojure.set :as set :refer [rename-keys]]
             [clojure.string :as string]
             [jsonista.core :as json]
@@ -167,7 +168,7 @@
  (merge oz-config
         {:title "Confirmed COVID19 cases in China and Germany",
          :data {:values (let [date "2020-03-19"]
-                          (->> jh/covid19-confirmed-csv
+                          (->> jh/confirmed
                                ;; Notice improved readability from working with seq of maps:
                                (map #(select-keys % [:province-state :country-region date]))
                                (filter (comp #{"China" "Mainland China" "Germany"} :country-region))
@@ -267,7 +268,7 @@
                       :subtitle "(Countries with >50 cases as of 11.3.2020)"}
               :width 1200 :height 700
               :data {:values
-                     (->> (map (fn [ctry] [ctry (zipmap jh/csv-dates (jh/country-totals ctry jh/covid19-confirmed-csv))])
+                     (->> (map (fn [ctry] [ctry (zipmap jh/csv-dates (jh/country-totals ctry jh/confirmed))])
                                (set/difference jh/countries #{"Mainland China" "China" "Others"} ))
                           (reduce (fn [vega-values [country date->cases]]
                                     (if (> 500 (apply max (vals date->cases))) ; ignore countries with fewer than X cases

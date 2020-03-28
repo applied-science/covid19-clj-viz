@@ -1,10 +1,12 @@
 (ns appliedsciencestudio.covid19-clj-viz.explore
+  "REPL notebook for exploration through data visualization.
+
+  Intended to be executed one form at a time, interactively in your
+  editor-connected REPL"
   (:require [appliedsciencestudio.covid19-clj-viz.china :as china]
             [appliedsciencestudio.covid19-clj-viz.deutschland :as deutschland]
-            [appliedsciencestudio.covid19-clj-viz.johns-hopkins :as jh]
-            [appliedsciencestudio.covid19-clj-viz.viz :as viz :refer [oz-config
-                                                                      barchart-dimensions]]
-            [appliedsciencestudio.covid19-clj-viz.world-bank :as world-bank]
+            [appliedsciencestudio.covid19-clj-viz.sources.johns-hopkins :as jh]
+            [appliedsciencestudio.covid19-clj-viz.sources.world-bank :as world-bank]
             [clojure.string :as string]
             [jsonista.core :as json]
             [oz.core :as oz])
@@ -12,27 +14,63 @@
            [java.time.temporal ChronoUnit]
            [java.time.format DateTimeFormatter]))
 
-;;;; Another bar chart
-;; ...sorted and with some rearranging around `province/country`
-(oz/view! (merge oz-config
-                 {:title "COVID19 cases in selected countries",
-                  :width 510, :height 200
-                  :data {:values (->> jh/covid19-confirmed-csv
-                                      (map #(select-keys % [:province-state :country-region jh/last-reported-date]))
-                                      ;; restrict to countries we're interested in:
-                                      (filter (comp #{"Mainland China" "Iran" "Italy" "Germany"} :country-region))
-                                      (reduce (fn [acc {:keys [province-state country-region] :as m}]
-                                                (conj acc {:location (if (string/blank? province-state)
-                                                                       country-region
-                                                                       (str province-state ", " country-region))
-                                                           :cases (get m jh/last-reported-date)}))
-                                              [])
-                                      (remove (comp #{"Hubei, Mainland China"} :location))
-                                      (sort-by :cases))},
-                  :mark {:type "bar" :color "#9085DA"}
-                  :encoding {:x {:field "cases", :type "quantitative"}
-                             :y {:field "location", :type "ordinal"
-                                 :sort nil}}}))
+(oz/start-server! 8082)
+
+;; Now some setup for more interesting visualizations
+(def applied-science-palette
+  {:pink   "#D46BC8"
+   :green  "#38D996"
+   :blue   "#4FADFF"
+   :purple "#9085DA"})
+
+(def applied-science-font
+  {:mono "IBM Plex Mono"
+   :sans "IBM Plex Sans"})
+
+(def oz-config
+  "Default settings for Oz visualizations"
+  (let [font "IBM Plex Mono"]
+    {:config {:style {:cell {:stroke "transparent"}}
+              :legend {:labelFont font
+                       :labelFontSize 12
+                       :titleFont "IBM Plex Mono"
+                       :gradientThickness 40}
+              :axis {:labelFont font
+                     :titleFont font
+                     :titleFontSize 20}}
+     :title {:font "IBM Plex Sans"
+             :fontSize 14
+             :anchor "middle"}}))
+
+
+;;;; ===========================================================================
+;;;; A bar chart to compare particular countries
+
+;; Sorted and with some rearranging around `province/country`.
+(oz/view!
+ (merge oz-config
+        {:title "COVID19 cases in selected countries",
+         :width 510, :height 200
+         :data {:values (->> jh/confirmed
+                             (map #(select-keys % [:province-state :country-region jh/last-reported-date]))
+                             ;; restrict to countries we're interested in:
+                             (filter (comp #{"China" "Mainland China"
+                                             "Iran"
+                                             "Italy" "Spain"
+                                             "Germany"} ;; FIXME change to suit your questions
+                                           :country-region))
+                             (reduce (fn [acc {:keys [province-state country-region] :as m}]
+                                       (conj acc {:location (if (string/blank? province-state)
+                                                              country-region
+                                                              (str province-state ", " country-region))
+                                                  :cases (get m jh/last-reported-date)}))
+                                     [])
+                             (remove (comp #{"Hubei, Mainland China"} :location))
+                             (sort-by :cases))},
+         :mark {:type "bar" :color "#9085DA"}
+         :encoding {:x {:field "cases", :type "quantitative"}
+                    :y {:field "location", :type "ordinal"
+                        :sort nil}}}))
 
 
 ;;;; Cases over time
@@ -128,4 +166,4 @@
                          :y {:field "cases", :type "quantitative"}
                          :tooltip {:field "cases" :type "quantitative"}
                          :color {:field "country" :type "nominal"
-                                 :scale {:range (mapv val viz/applied-science-palette)}}}}))
+                                 :scale {:range (mapv val applied-science-palette)}}}}))

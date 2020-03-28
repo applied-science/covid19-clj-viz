@@ -1,6 +1,6 @@
-(ns appliedsciencestudio.covid19-clj-viz.johns-hopkins
+(ns appliedsciencestudio.covid19-clj-viz.sources.johns-hopkins
   "Johns Hopkins COVID19 data sources, with util fns"
-  (:require [appliedsciencestudio.covid19-clj-viz.world-bank :as world-bank]
+  (:require [appliedsciencestudio.covid19-clj-viz.sources.world-bank :as world-bank]
             [meta-csv.core :as mcsv]
             [clojure.string :as string])
   (:import [java.time LocalDate]
@@ -17,39 +17,38 @@
         keyword)
     (str (parse-covid19-date s))))
 
-;; TODO rename these
-(def covid19-confirmed-csv
+(def confirmed
   "From https://github.com/CSSEGISandData/COVID-19/tree/master/who_covid_19_situation_reports
    Existence of this file relies on cloning Johns Hopkins repo into resources directory. See README."
   (mcsv/read-csv "resources/COVID-19/csse_covid_19_data/csse_covid_19_time_series/time_series_covid19_confirmed_global.csv"
                  {:field-names-fn field-names}))
 
-(def covid19-recovered-csv
+(def recovered
   "From https://github.com/CSSEGISandData/COVID-19/tree/master/who_covid_19_situation_reports
    Existence of this file relies on cloning Johns Hopkins repo into resources directory. See README."
   (mcsv/read-csv "resources/COVID-19/csse_covid_19_data/csse_covid_19_time_series/time_series_covid19_recovered_global.csv"
                  {:field-names-fn field-names}))
 
-(def covid19-deaths-csv
+(def deaths
   "From https://github.com/CSSEGISandData/COVID-19/tree/master/who_covid_19_situation_reports
    Existence of this file relies on cloning Johns Hopkins repo into resources directory. See README."
   (mcsv/read-csv "resources/COVID-19/csse_covid_19_data/csse_covid_19_time_series/time_series_covid19_deaths_global.csv"
                  {:field-names-fn field-names}))
 
 (def csv-dates
-  (drop 4 (map first (first covid19-confirmed-csv))))
+  (drop 4 (map first (first confirmed))))
 
 (def last-reported-date
-  (key (last (first covid19-confirmed-csv))))
+  (key (last (first confirmed))))
 
 (def countries
-  (set (map :country-region covid19-confirmed-csv)))
+  (set (map :country-region confirmed)))
 
 (defn data-exists-for-country? [kind country]
   (let [rows (case kind
-              :recovered covid19-recovered-csv
-              :deaths    covid19-deaths-csv
-              :confirmed covid19-confirmed-csv)]
+              :recovered recovered
+              :deaths    deaths
+              :confirmed confirmed)]
    (some (comp #{country} :country-region) rows)))
 
 (defn country-totals
@@ -66,9 +65,9 @@
   (assert (#{:recovered :deaths :confirmed} kind))
   (assert (data-exists-for-country? kind country))
   (let [rows (case kind
-               :recovered covid19-recovered-csv
-               :deaths    covid19-deaths-csv
-               :confirmed covid19-confirmed-csv)]
+               :recovered recovered
+               :deaths    deaths
+               :confirmed confirmed)]
     (->> rows
          (country-totals country)
          (partition 2 1)
@@ -79,11 +78,11 @@
          (sort-by key))))
 
 (comment
-  (country-totals "Germany" covid19-confirmed-csv)
-  (country-totals "Australia" covid19-deaths-csv)
+  (country-totals "Germany" confirmed)
+  (country-totals "Australia" deaths)
   
-  (country-totals "Australia" covid19-confirmed-csv)
-  (country-totals "Australia" covid19-deaths-csv)
+  (country-totals "Australia" confirmed)
+  (country-totals "Australia" deaths)
   
   (new-daily-cases-in :confirmed "Germany")
   
@@ -102,9 +101,9 @@
                      country country)]
     (if (data-exists-for-country? kind country)
       (let [rows (case kind
-                   :recovered covid19-recovered-csv
-                   :deaths    covid19-deaths-csv
-                   :confirmed covid19-confirmed-csv)
+                   :recovered recovered
+                   :deaths    deaths
+                   :confirmed confirmed)
             row (partition 2 1 (country-totals country rows))
             [a b] (nth row (- (count row) (inc days)))]
         (if (zero? a)
@@ -114,11 +113,11 @@
 
 (comment
 
-  (country-totals "Germany" covid19-deaths-csv)
+  (country-totals "Germany" deaths)
   ;; (0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
   ;; 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 2 2 3 3 7 9 11 17 24)
 
-  (country-totals "Germany" covid19-confirmed-csv)
+  (country-totals "Germany" confirmed)
   ;; (0 0 0 0 0 1 4 4 4 5 8 10 12 12 12 12 13 13 14 14 16 16 16 16 16
   ;; 16 16 16 16 16 16 16 16 16 17 27 46 48 79 130 159 196 262 482 670
   ;; 799 1040 1176 1457 1908 2078 3675 4585 5795 7272 9257)  

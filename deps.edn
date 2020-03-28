@@ -1,5 +1,6 @@
 {:paths ["resources" "src"]
  :deps {org.clojure/clojure {:mvn/version "1.10.1"}
+        org.clojure/tools.namespace {:mvn/version "1.0.0"}
         org.clojure/data.csv {:mvn/version "1.0.0"}
         hickory {:mvn/version "0.7.1"}
         meta-csv {:mvn/version "0.1.0"}
