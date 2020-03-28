@@ -64,8 +64,8 @@
   (let [[hdr & rows] (csv/read-csv (slurp "resources/Italia-COVID-19/dati-province/dpc-covid19-ita-province.csv"))]
     (map zipmap
          (repeat (map (comp keyword #(string/replace % "_" "-")) hdr))
-         rows))q
-
+         rows))
+  
 
   ;;;; Check the data
   ;; Do we have the right number of provinces?
