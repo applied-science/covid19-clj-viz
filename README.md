@@ -2,8 +2,10 @@
 
 I wanted to better understand COVID-19, so I cloned Johns Hopkins'
 daily-updated dataset, fired up a Clojure REPL, and started massaging
-the data into a visualization using the Vega grammar. This repository
-is a REPL notebook to **demonstrate** and **extend** that exploration.
+the data into a visualization using the Vega grammar. 
+
+This repository is a REPL notebook to **demonstrate** and **extend**
+that exploration.
 
 
 ## Usage
