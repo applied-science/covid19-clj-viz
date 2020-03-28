@@ -9,7 +9,8 @@ cleaned-up subset of the code I used.
 ## Usage
 
 1. Clone the [Johns Hopkins dataset repo](https://github.com/CSSEGISandData/COVID-19) to *resources/* within this repo
-2. Open `appliedsciencestudio.covid19-clj-viz.viz`, connect a Clojure
+2. Clone the [data from Italy's Civil Protection Department](https://github.com/pcm-dpc/COVID-19) to *resources/* to `Italia-COVID-19` within this repo
+3. Open `appliedsciencestudio.covid19-clj-viz.viz`, connect a Clojure
 CLI REPL, and evaluate forms. Oz (the Vega wrapper) will open a
 browser window to display the visualizations.
 

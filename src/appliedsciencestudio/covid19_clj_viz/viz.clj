@@ -1,6 +1,7 @@
 (ns appliedsciencestudio.covid19-clj-viz.viz
   (:require [appliedsciencestudio.covid19-clj-viz.china :as china]
             [appliedsciencestudio.covid19-clj-viz.deutschland :as deutschland]
+            [appliedsciencestudio.covid19-clj-viz.italia :as italia]
             [appliedsciencestudio.covid19-clj-viz.johns-hopkins :as jh]
             [appliedsciencestudio.covid19-clj-viz.world-bank :as world-bank]
             [clojure.set :as set :refer [rename-keys]]
@@ -34,6 +35,8 @@
                            :Cases          (get-in deutschland/bundeslaender-data [(:NAME_1 (:properties feature)) :cases] 0)
                            :Cases-per-100k (get-in deutschland/bundeslaender-data [(:NAME_1 (:properties feature)) :cases-per-100k] 0)))
                   features))))
+
+
 
 (comment
 
@@ -85,14 +88,80 @@
              :fontSize 14
              :anchor "middle"}}))
 
-(def germany-dimensions
+(def european-state-dimensions
   {:width 550 :height 700})
+
+;;;; ===========================================================================
+;;;; Show the Italian map
+;;;  By region
+
+(def italia-region-geojson-with-data
+  (update (json/read-value (java.io.File. "resources/public/public/data/limits_IT_regions-original.geo.json")
+                           (json/object-mapper {:decode-key-fn true}))
+          :features
+          (fn [features]
+            (mapv (fn [feature]
+                    (assoc feature
+                           :reg_name     (:reg_name (:properties feature))
+                           :Cases          (get-in italia/region-data [(:reg_name (:properties feature)) :cases] 0)
+                           :Cases-per-100k (get-in italia/region-data [(:reg_name (:properties feature)) :cases-per-100k] 0)))
+                  features))))
+
+(oz/view!
+ (merge-with merge oz-config european-state-dimensions
+             {:title {:text "COVID19 cases in Italy, by province, per 100k inhabitants"}
+              :data {:name "italy"
+                     :values italia-region-geojson-with-data
+                     :format {:property "features"}},
+              :mark {:type "geoshape" :stroke "white" :strokeWidth 1}
+              :encoding {:color {:field "Cases-per-100k",
+                                 :type "quantitative"
+                                 :scale {:domain [0
+                                                  ;; NB: compare Hubei's 111 to German maximum. (It was 0.5 when I started this project, and ~1 now.)
+                                                  (apply max (map :cases-per-100k (vals italia/region-data)))]}}
+                         :tooltip [{:field "reg_name" :type "nominal"}
+                                   {:field "Cases" :type "quantitative"}]}
+              :selection {:highlight {:on "mouseover" :type "single"}}}))
+
+;;;; ===========================================================================
+;;;; Show the Italian map
+;;;  By province
+
+(def italia-prov-geojson-with-data
+  (update (json/read-value (java.io.File. "resources/public/public/data/limits_IT_provinces-original.geo.json")
+                           (json/object-mapper {:decode-key-fn true}))
+          :features
+          (fn [features]
+            (mapv (fn [feature]
+                    (assoc feature
+                           :prov_name     (:prov_name (:properties feature))
+                           :Cases          (get-in italia/province-data [(:prov_name (:properties feature)) :cases] 0)
+                           :Cases-per-100k (get-in italia/province-data [(:prov_name (:properties feature)) :cases-per-100k] 0)))
+                  features))))
+
+(oz/view!
+ (merge-with merge oz-config european-state-dimensions
+             {:title {:text "COVID19 cases in Italy, by province, per 100k inhabitants"}
+              :data {:name "italy"
+                     ;; FIXME this keeps getting cached somewhere in Firefox or Oz
+                     ;; :url "/public/data/deutschland-bundeslaender.geo.json",
+                     :values italia-prov-geojson-with-data
+                     :format {:property "features"}},
+              :mark {:type "geoshape" :stroke "white" :strokeWidth 1}
+              :encoding {:color {:field "Cases-per-100k",
+                                 :type "quantitative"
+                                 :scale {:domain [0
+                                                  ;; NB: compare Hubei's 111 to German maximum. (It was 0.5 when I started this project, and ~1 now.)
+                                                  (apply max (map :cases-per-100k (vals italia/province-data)))]}}
+                         :tooltip [{:field "prov_name" :type "nominal"}
+                                   {:field "Cases" :type "quantitative"}]}
+              :selection {:highlight {:on "mouseover" :type "single"}}}))
 
 
 ;;;; ===========================================================================
 ;;;; Geographic visualization of cases in each Germany state, shaded proportional to population
 (oz/view!
- (merge-with merge oz-config germany-dimensions
+ (merge-with merge oz-config european-state-dimensions
              {:title {:text "COVID19 cases in Germany, by state, per 100k inhabitants"}
               :data {:name "germany"
                      ;; FIXME this keeps getting cached somewhere in Firefox or Oz
@@ -113,7 +182,7 @@
 ;;;; Deceptive version of that same map
 ;;    - red has emotional valence ["#fde5d9" "#a41e23"]
 ;;    - we report cases without taking population into account
-(oz/view! (merge oz-config germany-dimensions
+(oz/view! (merge oz-config european-state-dimensions
                  {:title "COVID19 cases in Germany (*not* population-scaled)"
                   :data {:name "germany"
                          ;; FIXME this keeps getting cached somewhere in Firefox or Oz
@@ -148,7 +217,7 @@
                                (filter (comp #{"China" "Mainland China" "Germany"} :country-region))
                                (reduce (fn [acc m]
                                          (conj acc {:state-province (if (string/blank? (:province-state m))
-                                                                      "(All German federal states)"  
+                                                                      "(All German federal states)"
                                                                       (:province-state m))
                                                     :cases (get m date)}))
                                        [])
