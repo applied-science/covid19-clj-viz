@@ -285,6 +285,5 @@
               :mark {:type "line" :strokeWidth 4 :point "transparent"}
               :encoding {:x {:field "date", :type "temporal"},
                          :y {:field "cases", :type "quantitative"}
-                         ;; TODO tooltip for country
                          :color {:field "country", :type "nominal"}
                          :tooltip {:field "country", :type "nominal"}}}))
