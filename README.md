@@ -30,8 +30,10 @@ other, similar ways:
    COVID-19
    situation](https://alanmarazzi.gitlab.io/blog/posts/2020-3-19-italy-covid/)
    without Panthera, as a demonstration of using orthodox Clojure
- - `italia` visualizes COVID-19 case in Italy *[contributed by David
+ - `italia` visualizes COVID-19 cases in Italy *[contributed by David
    Schmudde]*
+ - `india` visualizes COVID-19 cases in India *[contributed by Noor
+   Afshan Fathima]*
  - `explore` is a grab-bag of general visual explorations – line & bar
    charts, choropleths
  - `china` and `deutschland` are for transforming country-specific
