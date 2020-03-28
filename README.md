@@ -36,7 +36,7 @@ other, similar ways:
    charts, choropleths
  - `china` and `deutschland` are for transforming country-specific
    data in support of visualizations
- - `source*` namespaces are for parsing of source data (e.g. Johns
+ - `source/*` namespaces are for parsing of source data (e.g. Johns
    Hopkins, the World Bank) into usable structures
 
 Some namespaces depend on cloning other repos into `resources. For
