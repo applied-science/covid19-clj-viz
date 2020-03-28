@@ -173,6 +173,83 @@
                          :color {:field "country" :type "nominal"
                                  :scale {:range (mapv val applied-science-palette)}}}}))
 
+;;;; ===========================================================================
+;;;; Choropleth: European countries' COVID19 rate of infection
+;; geojson from https://github.com/leakyMirror/map-of-europe/blob/master/GeoJSON/europe.geojson
+
+(def europe-dimensions
+  {:width 750 :height 750})
+
+(def europe-geojson
+  (json/read-value (java.io.File. "resources/public/public/data/europe.geo.json")
+                   (json/object-mapper {:decode-key-fn true})))
+
+(comment
+  ;; Which countries are in this geoJSON?
+  (map :NAME (map :properties (:features europe-geojson)))
+  ;; ("Azerbaijan" "Albania" "Armenia" "Bosnia and Herzegovina" "Bulgaria" "Cyprus" "Denmark" "Ireland" "Estonia" "Austria" "Czech Republic" "Finland" "France" "Georgia" "Germany" "Greece" "Croatia" "Hungary" "Iceland" "Israel" "Italy" "Latvia" "Belarus" "Lithuania" "Slovakia" "Liechtenstein" "The former Yugoslav Republic of Macedonia" "Malta" "Belgium" "Faroe Islands" "Andorra" "Luxembourg" "Monaco" "Montenegro" "Netherlands" "Norway" "Poland" "Portugal" "Romania" "Republic of Moldova" "Slovenia" "Spain" "Sweden" "Switzerland" "Turkey" "United Kingdom" "Ukraine" "San Marino" "Serbia" "Holy See (Vatican City)" "Russia")
+
+  (clojure.set/difference (set (map (comp #(get world-bank/normalize-country % %) :NAME)
+                                    (map :properties (:features europe-geojson))))
+                          jh/countries)
+
+  ;; What outliers are making the map less useful?
+  (sort-by second (map (juxt (comp :NAME :properties) :rate)
+                       (:features
+                        (update europe-geojson
+                                :features
+                                (fn [features]
+                                  (mapv (fn [feature]
+                                          (let [cntry (:NAME (:properties feature))]
+                                            (assoc feature
+                                                   :country cntry
+                                                   :rate (jh/rate-as-of :confirmed cntry 1))))
+                                        features))))))
+
+  (jh/new-daily-cases-in :deaths "Andorra")
+
+  )
+
+(def europe-infection-datapoints
+  (update europe-geojson :features
+          (fn [features]
+            (mapv (fn [feature]
+                    (let [cntry (:NAME (:properties feature))]
+                      (assoc feature
+                             :country cntry
+                             ;; Because some countries (e.g. Germany) are
+                             ;; not testing people post-mortem, which
+                             ;; drastically reduces their reported
+                             ;; deaths, I chose to calculate only
+                             ;; confirmed cases.
+                             :confirmed-rate (jh/rate-as-of :confirmed cntry 1))))
+                  features))))
+
+(comment
+  ;; Let's look at the rate of change data
+  (sort-by second (map (juxt :country :confirmed-rate) (:features europe-infection-datapoints)))
+
+  )
+
+;; The rate of infection is relatively constant across countries.
+(oz/view!
+ (merge-with merge oz-config europe-dimensions
+             {:title {:text "COVID19 in Europe: Rate of Infection Increase"}
+              :data {:values europe-infection-datapoints
+                     :format {:type "json" :property "features"}}
+              :mark {:type "geoshape" :stroke "white" :strokeWidth 1}
+              :encoding {:color {:field "confirmed-rate" :type "quantitative"
+                                 :scale {:domain [0 (->> (:features europe-infection-datapoints)
+                                                         ;; Nix the outlier TODO automate this
+                                                         (remove (comp #{"Andorra"} :country))
+                                                         (map :confirmed-rate)
+                                                         (apply max))]
+                                         :range [(:blue applied-science-palette)
+                                                 (:green applied-science-palette)]}}
+                         :tooltip [{:field "country" :type "nominal"}
+                                   {:field "confirmed-rate" :type "quantitative"}]}
+              :selection {:highlight {:on "mouseover" :type "single"}}}))
+
 
 ;;;; ===========================================================================
 ;;;; Coronavirus cases in Italy, by region and province
