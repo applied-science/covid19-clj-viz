@@ -12,3 +12,4 @@ pom.xml.asc
 .hgignore
 .hg/
 /resources/COVID-19/
+.idea/
