@@ -68,6 +68,14 @@
         coerce-type-from-string)
     s))
 
+(def legacy-cases
+  "COVID-19 cases in Germany as of 6 March 2020.
+  Necessary because our other sources (including RKI) do not provide historical case data.
+  Manually copied from https://en.wikipedia.org/wiki/2020_coronavirus_pandemic_in_Germany#Robert_Koch_Institute"
+  (mcsv/read-csv "resources/deutschland.covid19cases.2020-03-04.csv"
+                 {:field-names-fn {"Bundesland" :state
+                                   "Fälle" :cases}}))
+
 (def bundeslaender-data
   "Map from Bundesland (German state) to case data.
    Case data: cases, cases per 100.000 inhabitants, deaths, increase from previous report.

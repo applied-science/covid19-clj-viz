@@ -168,36 +168,39 @@
 
 ;; Bar chart of the severity of the outbreak across regions in China and Germany
 ;; (with or without the outlier that is China's Hubei province)
+;; NB: the situation and therefore the data have changed dramatically
+;; since the article was published, so this chart is _very_
+;; different!
 (oz/view!
- ;; NB: the situation and therefore the data have changed dramatically
- ;; since the article was published, so this chart is _very_
- ;; different!
- (merge-with merge oz-config
-             {:title {:text "Confirmed COVID19 cases in China and Germany"}
-              :data {:values (let [date "2020-03-19"]
-                               (->> jh/confirmed
-                                    ;; Notice improved readability from working with seq of maps:
-                                    (map #(select-keys % [:province-state :country-region date]))
-                                    (filter (comp #{"China" "Mainland China" "Germany"} :country-region))
-                                    (reduce (fn [acc m]
-                                              (conj acc {:state-province (if (string/blank? (:province-state m))
-                                                                           "(All German federal states)"
-                                                                           (:province-state m))
-                                                         :cases (get m date)}))
-                                            [])
-                                    (concat (->> deutschland/bundeslaender-data
-                                                 vals
-                                                 (remove (comp #{"Gesamt"} :bundesland))
-                                                 (map (comp #(select-keys % [:state-province :cases])
-                                                            #(rename-keys % {:bundesland :state-province})))
-                                                 (sort-by :state-province)))
-                                    ;; ;; FIXME this is the line to toggle:
-                                    (remove (comp #{"Hubei"} :state-province))
-                                    (sort-by :cases)))},
-              :mark {:type "bar" :color "#9085DA"}
-              :encoding {:x {:field "cases", :type "quantitative"}
-                         :y {:field "state-province", :type "ordinal"
-                             :sort nil}}}))
+ (merge-with
+  merge oz-config
+  {:title {:text "Confirmed COVID19 cases in China and Germanyxxx"}
+   :width 650 :height 750
+   ;; Here is the snippet of code the article examines in detail:
+   :data {:values (let [date "2020-03-04"]
+                    (->> jh/confirmed
+                         (filter (comp #{"China"} :country-region))
+                         (map #(select-keys % [:province-state
+                                               :country-region
+                                               date]))
+                         (concat (map #(assoc % :country "Germany")
+                                      deutschland/legacy-cases)
+                                 [{:country "Germany"
+                                   :state "(All of Germany)"
+                                   :cases (apply + (map :cases deutschland/legacy-cases))}])
+                         (map #(rename-keys % {:state :province-state
+                                               date :cases
+                                               :country-region :country}))
+                         ;; ;; FIXME this is the line to toggle:
+                         (remove (comp #{"Hubei"} :province-state))))},
+   :mark "bar"
+   :encoding {:x {:field "cases", :type "quantitative"}
+              :y {:field "province-state", :type "ordinal"
+                  ;; sort along the y-axis in descending order of the x-value:
+                  :sort "-x"}
+              :color {:field "country" :type "ordinal"
+                      :scale {:range [(:green applied-science-palette)
+                                      (:purple applied-science-palette)]}}}}))
 
 
 ;;;; ===========================================================================
@@ -234,7 +237,9 @@
                      :format {:property "features"}},
               :mark {:type "geoshape" :stroke "white" :strokeWidth 1}
               :encoding {:color {:field "cases-binned",
-                                 :bin true
+                                 :bin true ;; <-- we pre-processed the
+                                           ;; data into bins, so here
+                                           ;; we merely notify Vega.
                                  :type "quantitative"
                                  :scale {:range ["#fde5d9"
                                                  "#f9af91"
