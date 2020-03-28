@@ -121,10 +121,10 @@
   (vals (take 10 (sort-by key #(compare %2 %1) (jh/new-daily-cases-in :confirmed "Germany"))))
   ;; (1477 1210 910 1597 170 451 281 136 241 129)
 
-  (vals (take 10 (sort-by key #(compare %2 %1) (jh/new-daily-cases-in :confirmed "Italy"))))
+  (vals (take 10 (sort-by key #(compare %2 %1) (jh/new-daily-cases-in :confirmed "Italy")))))
   ;; (3233 3590 3497 5198 0 2313 977 1797 1492 1247)
   
-  )
+
 
 
 ;;;; ===========================================================================
@@ -359,8 +359,8 @@
                                              (map (comp #(select-keys % [:state-province :confirmed])
                                                         #(rename-keys % {:state :state-province})))
                                              (sort-by :state)))
-                                ;; ;; FIXME this is the line to toggle:
-                                (remove (comp #{"Hubei"} :state-province))))},
+                                (remove (comp #{"Hubei"} :state-province))
+                                (remove (comp #{"Total"} :state-province))))},
           :mark {:type "bar" :color "#9085DA"}
           :encoding {:x {:field "confirmed", :type "quantitative"}
                      :y {:field "state-province", :type "ordinal"
