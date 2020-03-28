@@ -3,42 +3,20 @@
 
   Intended to be executed one form at a time, interactively in your
   editor-connected REPL"
-  (:require [appliedsciencestudio.covid19-clj-viz.italia :as italia]
+  (:require [appliedsciencestudio.covid19-clj-viz.common :refer [applied-science-font
+                                                                 applied-science-palette
+                                                                 oz-config]]
             [appliedsciencestudio.covid19-clj-viz.sources.johns-hopkins :as jh]
             [appliedsciencestudio.covid19-clj-viz.sources.world-bank :as world-bank]
             [clojure.string :as string]
+            [clojure.set]
             [jsonista.core :as json]
-            [oz.core :as oz])
-  (:import [java.time LocalDate]
-           [java.time.temporal ChronoUnit]
-           [java.time.format DateTimeFormatter]))
+            [oz.core :as oz]))
 
-(oz/start-server! 8082)
+(comment
+  (oz/start-server! 8082)
 
-;; Now some setup for more interesting visualizations
-(def applied-science-palette
-  {:pink   "#D46BC8"
-   :green  "#38D996"
-   :blue   "#4FADFF"
-   :purple "#9085DA"})
-
-(def applied-science-font
-  {:mono "IBM Plex Mono"
-   :sans "IBM Plex Sans"})
-
-(def oz-config
-  "Default settings for Oz visualizations"
-  {:config {:style {:cell {:stroke "transparent"}}
-            :legend {:labelFont (:mono applied-science-font)
-                     :labelFontSize 12
-                     :titleFont (:mono applied-science-font)
-                     :gradientThickness 40}
-            :axis {:labelFont (:mono applied-science-font)
-                   :titleFont (:mono applied-science-font)
-                   :titleFontSize 20}}
-   :title {:font (:sans applied-science-font)
-           :fontSize 14
-           :anchor "middle"}})
+  )
 
 
 ;;;; ===========================================================================
@@ -48,7 +26,7 @@
 (oz/view!
  (merge oz-config
         {:title "COVID19 cases in selected countries",
-         :width 510, :height 200
+         :width 800, :height 400
          :data {:values (->> jh/confirmed
                              (map #(select-keys % [:province-state :country-region jh/last-reported-date]))
                              ;; restrict to countries we're interested in:
@@ -94,9 +72,9 @@
                        :type "deaths"
                        :country c})
                     (jh/new-daily-cases-in :deaths c)))
-       ;; only 15 February - 11 March
+       ;; only 17 February - 11 March
        (filter (comp (fn [d] (or (and (= 2 (Integer/parseInt (subs d 5 7)))
-                                     (<= 15 (Integer/parseInt (subs d 8 10))))
+                                     (<= 17 (Integer/parseInt (subs d 8 10))))
                                 (and (= 3 (Integer/parseInt (subs d 5 7)))
                                      (> 12 (Integer/parseInt (subs d 8 10))))))
                      :date))))
@@ -252,60 +230,31 @@
 
 
 ;;;; ===========================================================================
-;;;; Coronavirus cases in Italy, by region and province
+;;;; Total Cases of Coronavirus Outside of China
+;; from Chart 9 https://medium.com/@tomaspueyo/coronavirus-act-today-or-people-will-die-f4d3d9cd99ca
 
-;; Dontributed by David Schmudde
-
-(def italia-region-geojson-with-data
-  (update (json/read-value (java.io.File. "resources/public/public/data/limits_IT_regions-original.geo.json")
-                           (json/object-mapper {:decode-key-fn true}))
-          :features
-          (fn [features]
-            (mapv (fn [feature]
-                    (assoc feature
-                           :reg_name     (:reg_name (:properties feature))
-                           :Cases          (get-in italia/region-data [(:reg_name (:properties feature)) :cases] 0)
-                           :Cases-per-100k (get-in italia/region-data [(:reg_name (:properties feature)) :cases-per-100k] 0)))
-                  features))))
-
-(def italy-dimensions
-  {:width 550 :height 700})
-
-;; Regionally, we can see the north is affected strongly
 (oz/view!
- (merge-with merge oz-config italy-dimensions
-             {:title {:text "COVID19 cases in Italy, by province, per 100k inhabitants"}
-              :data {:name "italy"
-                     :values italia-region-geojson-with-data
-                     :format {:property "features"}},
-              :mark {:type "geoshape" :stroke "white" :strokeWidth 1}
-              :encoding {:color {:field "Cases-per-100k",
-                                 :type "quantitative"
-                                 :scale {:domain [0 (apply max (map :cases-per-100k (vals italia/region-data)))]}}
-                         :tooltip [{:field "reg_name" :type "nominal"}
-                                   {:field "Cases" :type "quantitative"}]}
-              :selection {:highlight {:on "mouseover" :type "single"}}}))
-
-;; Looking province-by-province, we can see how geographically concentrated the crisis is:
-(oz/view!
- (merge-with merge oz-config italy-dimensions
-             {:title {:text "COVID19 cases in Italy, by province, per 100k inhabitants"}
-              :data {:name "italy"
-                     :values (update (json/read-value (java.io.File. "resources/public/public/data/limits_IT_provinces-original.geo.json")
-                                                      (json/object-mapper {:decode-key-fn true}))
-                                     :features
-                                     (fn [features]
-                                       (mapv (fn [feature]
-                                               (assoc feature
-                                                      :prov_name     (:prov_name (:properties feature))
-                                                      :Cases          (get-in italia/province-data [(:prov_name (:properties feature)) :cases] 0)
-                                                      :Cases-per-100k (get-in italia/province-data [(:prov_name (:properties feature)) :cases-per-100k] 0)))
-                                             features)))
-                     :format {:property "features"}},
-              :mark {:type "geoshape" :stroke "white" :strokeWidth 1}
-              :encoding {:color {:field "Cases-per-100k",
-                                 :type "quantitative"
-                                 :scale {:domain [0 (apply max (map :cases-per-100k (vals italia/province-data)))]}}
-                         :tooltip [{:field "prov_name" :type "nominal"}
-                                   {:field "Cases-per-100k" :type "quantitative"}]}
-              :selection {:highlight {:on "mouseover" :type "single"}}}))
+ (merge-with merge oz-config
+             {:title {:text "Total Cases of Coronavirus Outside of China"
+                      :subtitle "(Countries with >50 cases as of 11.3.2020)"}
+              :width 1200 :height 700
+              :data {:values
+                     (->> (map (fn [ctry] [ctry (zipmap jh/csv-dates (jh/country-totals ctry jh/confirmed))])
+                               (clojure.set/difference jh/countries #{"Mainland China" "China" "Others"} ))
+                          (reduce (fn [vega-values [country date->cases]]
+                                    (if (> 500 (apply max (vals date->cases))) ; ignore countries with fewer than X cases
+                                      vega-values
+                                      (apply conj vega-values
+                                             (map (fn [[d c]]
+                                                    {:date d
+                                                     :cases c
+                                                     :country country})
+                                                  date->cases))))
+                                  [])
+                          ;; purely for our human reading convenience:
+                          (sort-by (juxt :country :date)))}
+              :mark {:type "line" :strokeWidth 4 :point "transparent"}
+              :encoding {:x {:field "date", :type "temporal"},
+                         :y {:field "cases", :type "quantitative"}
+                         :color {:field "country", :type "nominal"}
+                         :tooltip {:field "country", :type "nominal"}}}))

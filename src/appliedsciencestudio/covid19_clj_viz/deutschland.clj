@@ -1,12 +1,12 @@
 (ns appliedsciencestudio.covid19-clj-viz.deutschland
-  (:require [clojure.string :as string]
-            [hickory.core :as hick]
+  (:require [hickory.core :as hick]
             [hickory.select :as s]
             [meta-csv.core :as mcsv]))
 
-(defn normalize-bundesland [bundesland]
+(defn normalize-bundesland
   "Standardizes English/German & typographic variation in German state names to standard German spelling.
   Made with nonce code (and some digital massage) from geoJSON and wikipedia data."
+  [bundesland]
   (get {"Bavaria" "Bayern"
         "Hesse" "Hessen"
         "Lower Saxony" "Niedersachsen"
@@ -53,7 +53,7 @@
   heuristics."
   [s]
   (or (reduce (fn [_ convert]
-                (when-let [converted (try (convert s) (catch Exception e false))]
+                (when-let [converted (try (convert s) (catch Exception _ false))]
                   (reduced converted)))
               [#(or (nil? %) (empty? %)) nil
                #(Integer/parseInt %)

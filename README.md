@@ -11,24 +11,34 @@ that exploration.
 ## Usage
 
 A cleaned-up subset of the code I used to produce the visualizations
-in the article is in the `article` namespace. If you're new to Clojure
-or just want to understand the article, I recommend starting there:
+in the article is in the `covid19-in-the-repl` namespace. If you're
+new to Clojure or just want to understand the article, I recommend
+starting there:
 
 1. Clone the [Johns Hopkins dataset
    repo](https://github.com/CSSEGISandData/COVID-19) to *resources/*
    within this repo
-1. Open `appliedsciencestudio.covid19-clj-viz.article`
+1. Open `appliedsciencestudio.covid19-clj-viz.covid19_in_the_repl`
 1. Start a Clojure REPL (based on deps.edn, not Leiningen)
 1. Evaluate forms one at a time, with a browser window open next to
    your editor so you can see the visualizatons as you go
 
-Other namespaces are for exploring and visualizing COVID-19 data in other, similar ways.
-
 Other visualizations depend on cloning other repos. For instance, we
 put [data from Italy's Civil Protection
 Department](https://github.com/pcm-dpc/COVID-19) into
-*resources/Italia-COVID-19* for visualizations from the `italia`
-namespace.
+*resources/Italia-COVID-19* for visualizations in the `italia` and
+`italian-situation` namespaces.
+
+Other namespaces are for exploring and visualizing COVID-19 data in
+other, similar ways:
+
+ - `italian-situation` demonstrates replicates Alan Marazzi's article [The Italian COVID-19 situation](https://alanmarazzi.gitlab.io/blog/posts/2020-3-19-italy-covid/) with orthodox Clojure rather than Panthera
+ - `italia` visualizes COVID-19 case in Italy (contributed by David Schmudde)
+ - `explore` is a grab-bag of general visual explorations – line & bar charts, choropleths
+ - `china` and `deutschland` are for transforming country-specific data in support of visualizations
+
+Parsing of source data (e.g. Johns Hopkins, the World Bank) into a
+usable structure happens in `source*` namespaces.
 
 
 ## License

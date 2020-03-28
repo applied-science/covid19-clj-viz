@@ -1,18 +1,18 @@
-(ns appliedsciencestudio.covid19-clj-viz.article
+(ns appliedsciencestudio.covid19-clj-viz.covid19-in-the-repl
   "Vega-lite visualizations for 'COVID19 in the REPL' article [1].
 
-  Intended to be executed one form at a time, interactively in your
-  editor-connected REPL. Some additional visualizations are included
-  for pedagogical clarity.
+  This is a REPL notebook, meaning it is intended to be executed one
+  form at a time, interactively in your editor-connected REPL. Some
+  additional visualizations are included for illustration.
 
   Some of this code is repeated in other namespaces, because this
-  namespace is intended to stand alone.
+  namespace is intended to stand somewhat alone.
 
   [1] http://www.appliedscience.studio/articles/covid19.html"
   (:require [appliedsciencestudio.covid19-clj-viz.china :as china]
             [appliedsciencestudio.covid19-clj-viz.deutschland :as deutschland]
             [appliedsciencestudio.covid19-clj-viz.sources.johns-hopkins :as jh]
-            [clojure.set :as set :refer [rename-keys]]
+            [clojure.set :refer [rename-keys]]
             [clojure.string :as string]
             [jsonista.core :as json]
             [oz.core :as oz]))
@@ -20,7 +20,10 @@
 ;; Our visualizations are powered by Vega(-lite), which we connect to
 ;; through an Oz server. Oz will open a browser window to display the
 ;; visualizations.
-(oz/start-server! 8082)
+(comment
+  (oz/start-server! 8082)
+
+  )
 
 
 ;;;; ===========================================================================
@@ -165,6 +168,9 @@
 ;; Bar chart of the severity of the outbreak across regions in China and Germany
 ;; (with or without the outlier that is China's Hubei province)
 (oz/view!
+ ;; NB: the situation and therefore the data have changed dramatically
+ ;; since the article was published, so this chart is _very_
+ ;; different!
  (merge oz-config
         {:title "Confirmed COVID19 cases in China and Germany",
          :data {:values (let [date "2020-03-19"]
@@ -256,34 +262,3 @@
                              :tooltip [{:field "province" :type "nominal"}
                                        {:field "cases" :type "quantitative"}
                                        {:field "cases-per-100k" :type "quantitative"}]}}))
-
-
-;;;; ===========================================================================
-;;;; Total Cases of Coronavirus Outside of China
-;; from Chart 9 https://medium.com/@tomaspueyo/coronavirus-act-today-or-people-will-die-f4d3d9cd99ca
-
-(oz/view!
- (merge-with merge oz-config
-             {:title {:text "Total Cases of Coronavirus Outside of China"
-                      :subtitle "(Countries with >50 cases as of 11.3.2020)"}
-              :width 1200 :height 700
-              :data {:values
-                     (->> (map (fn [ctry] [ctry (zipmap jh/csv-dates (jh/country-totals ctry jh/confirmed))])
-                               (set/difference jh/countries #{"Mainland China" "China" "Others"} ))
-                          (reduce (fn [vega-values [country date->cases]]
-                                    (if (> 500 (apply max (vals date->cases))) ; ignore countries with fewer than X cases
-                                      vega-values
-                                      (apply conj vega-values
-                                             (map (fn [[d c]]
-                                                    {:date d
-                                                     :cases c
-                                                     :country country})
-                                                  date->cases))))
-                                  [])
-                          ;; purely for our human reading convenience:
-                          (sort-by (juxt :country :date)))}
-              :mark {:type "line" :strokeWidth 4 :point "transparent"}
-              :encoding {:x {:field "date", :type "temporal"},
-                         :y {:field "cases", :type "quantitative"}
-                         :color {:field "country", :type "nominal"}
-                         :tooltip {:field "country", :type "nominal"}}}))

@@ -1,29 +1,17 @@
 (ns appliedsciencestudio.covid19-clj-viz.italia
-  "Following Alan Marazzi's 'The Italian COVID-19 situation' [1] with orthodox Clojure rather than Panthera
+  "Visualization of coronavirus situation in Italy.
 
-  Run it in NextJournal at https://nextjournal.com/alan/getting-started-with-italian-data-on-covid-19
-
-  [1] https://alanmarazzi.gitlab.io/blog/posts/2020-3-19-italy-covid/"
-  (:require [clojure.data.csv :as csv]
+  Contributed by David Schmudde.
+  
+  Relies on https://github.com/pcm-dpc/COVID-19 to be cloned into the
+  `resources` directory."
+  (:require [appliedsciencestudio.covid19-clj-viz.common :refer [oz-config]]
+            [jsonista.core :as json]
             [meta-csv.core :as mcsv]
-            [clojure.string :as string]))
+            [oz.core :as oz]))
 
-;; We can get province data out of Italy's CSV data using the orthodox
-;; Clojure approach, `clojure.data.csv`:
-(def provinces
-  (let [hdr [:date :state :region-code :region-name
-             :province-code :province-name :province-abbrev
-             :lat :lon :cases]
-        rows (csv/read-csv (slurp "resources/Italia-COVID-19/dati-province/dpc-covid19-ita-province.csv"))]
-    (map zipmap
-         (repeat hdr)
-         (rest rows))))
-
-;; Or, we could use Nils Grunwald's `meta-csv`, which does the
-;; automatic parsing that we often want.
-
-;; First, an Italian-to-English translation mapping for header names.
 (def fields-it->en
+  "Mapping of CSV header names from Italian to their English translation."
   {;; For provinces (and some for regions too)
    "data"                    :date
    "stato"                   :state
@@ -46,86 +34,14 @@
    "deceduti"                    :dead
    "tamponi"                     :tests})
 
-;; Now we can just read the CSV.
-(def provinces2
+
+(def provinces
+  "Seq of maps describing Italian provinces, including latest count of
+  coronavirus cases.
+
+  Depends on https://github.com/pcm-dpc/COVID-19"
   (mcsv/read-csv "resources/Italia-COVID-19/dati-province/dpc-covid19-ita-province-latest.csv"
                  {:field-names-fn fields-it->en}))
-
-(comment
-  ;;;; Let's examine the data.
-  ;; Instead of `pt/names`:
-  (keys (first provinces))
-
-  (keys (first provinces2))
-
-
-  ;;;; I often use an alternative approach when reading CSVs,
-  ;;;; transforming rather than replacing the header:
-  (let [[hdr & rows] (csv/read-csv (slurp "resources/Italia-COVID-19/dati-province/dpc-covid19-ita-province.csv"))]
-    (map zipmap
-         (repeat (map (comp keyword #(string/replace % "_" "-")) hdr))
-         rows))
-  
-
-  ;;;; Check the data
-  ;; Do we have the right number of provinces?
-  (count (distinct (map :province-name provinces))) ;; be sure to evaluate the inner forms as well
-
-  ;; No, there's an extra "In fase di definizione/aggiornamento", or cases not attributed to a province.
-
-  ;; Let's ignore those.
-  (remove (comp #{"In fase di definizione/aggiornamento"} :province-name) provinces)
-
-  )
-
-
-;; Again, we can use the DIY approach with Clojure's standard CSV parser:
-(def regions
-  (let [hdr [:date :state :region-code :region-name :lat :lon
-             :hospitalized :icu :total-hospitalized :quarantined
-             :total-positives :new-positives :recovered :dead :tests]
-        [_ & rows] (csv/read-csv (slurp "resources/Italia-COVID-19/dati-regioni/dpc-covid19-ita-regioni.csv"))]
-    (->> (map zipmap (repeat hdr) rows)
-         (map (comp (fn [m] (update m :quarantined #(Integer/parseInt %)))
-                    (fn [m] (update m :hospitalized #(Integer/parseInt %)))
-                    (fn [m] (update m :icu #(Integer/parseInt %)))
-                    (fn [m] (update m :dead #(Integer/parseInt %)))
-                    (fn [m] (update m :recovered #(Integer/parseInt %)))
-                    (fn [m] (update m :total-hospitalized #(Integer/parseInt %)))
-                    (fn [m] (update m :total-positives #(Integer/parseInt %)))
-                    (fn [m] (update m :new-positives #(Integer/parseInt %)))
-                    (fn [m] (update m :tests #(Integer/parseInt %))))))))
-
-
-;;;; Calculate daily changes
-;; Now we want to determine how many new tests were performed each
-;; day, and the proportion that were positive.
-
-;; The following is equivalent to `regions-tests`:
-(def tests-by-date
-  (reduce (fn [acc [date ms]]
-            (conj acc {:date date
-                       :tests (apply + (map :tests ms))
-                       :new-positives (reduce + (map :new-positives ms))}))
-          []
-          (group-by :date regions)))
-
-(comment
-  ;; Take a quick look at the data
-  (sort-by :date tests-by-date)
-
-  ;; And calculate our result using Clojure's sequence & collection libraries:
-  (reduce (fn [acc [m1 m2]]
-            (conj acc (let [daily-tests (- (:tests m2) (:tests m1))]
-                        (assoc m2
-                               :daily-tests daily-tests
-                               :new-by-test (double (/ (:new-positives m2)
-                                                       daily-tests))))))
-          []
-          (partition 2 1 (conj (sort-by :date tests-by-date)
-                               {:tests 0})))
-
-  )
 
 (defn normalize-region-names
   "These region names a different on the population data files, geo.json files, and the covid-19 files."
@@ -161,15 +77,17 @@
 (defn conform-to-territory-name
   "Index each map of territory information by territory name."
   [territories territory-key]
-  (->> (map #(vector (territory-key %) %) territories)
-       (into {})))
+  (into {} (map #(vector (territory-key %) %)
+                territories)))
 
 (defn compute-cases-per-100k [province-data-with-pop]
   (map #(let [cases (% :cases)
               population (% :population)
               calc-cases (fn [x] (double (/ cases x)))
               per-100k (fn [x] (/ x 100000))]
-          (->> (if population ((comp calc-cases per-100k) population) 0) ;; TODO: change from nil
+          (->> (if population
+                 ((comp calc-cases per-100k) population)
+                 0) ;; TODO: change from nil
                (assoc % :cases-per-100k))) province-data-with-pop))
 
 (def region-population-data
@@ -187,7 +105,8 @@
   (map #(let [territory-to-update (% territory-key)]
           (->> (all-territory-population territory-to-update)
                (:population)
-               (assoc % :population))) all-territory-data))
+               (assoc % :population)))
+       all-territory-data))
 
 (def region-data "For use with resources/public/public/data/limits_IT_regions-original.geo.json"
   (-> (add-population-to-territories region-covid-data region-population-data :region-name)
@@ -196,7 +115,65 @@
 
 (def province-data
   "For use with resources/public/public/data/limits_IT_provinces-original.geo.json"
-  (-> (remove (comp #{"In fase di definizione/aggiornamento"} :province-name) provinces2)
-                       (add-population-to-territories province-populations :province-name)
-                       (compute-cases-per-100k)
-                       (conform-to-territory-name :province-name)))
+  (-> (remove (comp #{"In fase di definizione/aggiornamento"} :province-name) provinces)
+      (add-population-to-territories province-populations :province-name)
+      (compute-cases-per-100k)
+      (conform-to-territory-name :province-name)))
+
+
+;;;; ===========================================================================
+;;;; Coronavirus cases in Italy, by region and province
+
+(def italia-region-geojson-with-data
+  (update (json/read-value (java.io.File. "resources/public/public/data/limits_IT_regions-original.geo.json")
+                           (json/object-mapper {:decode-key-fn true}))
+          :features
+          (fn [features]
+            (mapv (fn [feature]
+                    (assoc feature
+                           :reg_name     (:reg_name (:properties feature))
+                           :Cases          (get-in region-data [(:reg_name (:properties feature)) :cases] 0)
+                           :Cases-per-100k (get-in region-data [(:reg_name (:properties feature)) :cases-per-100k] 0)))
+                  features))))
+
+(def italy-dimensions
+  {:width 550 :height 700})
+
+;; Regionally, we can see the north is affected strongly
+(oz/view!
+ (merge-with merge oz-config italy-dimensions
+             {:title {:text "COVID19 cases in Italy, by province, per 100k inhabitants"}
+              :data {:name "italy"
+                     :values italia-region-geojson-with-data
+                     :format {:property "features"}},
+              :mark {:type "geoshape" :stroke "white" :strokeWidth 1}
+              :encoding {:color {:field "Cases-per-100k",
+                                 :type "quantitative"
+                                 :scale {:domain [0 (apply max (map :cases-per-100k (vals region-data)))]}}
+                         :tooltip [{:field "reg_name" :type "nominal"}
+                                   {:field "Cases" :type "quantitative"}]}
+              :selection {:highlight {:on "mouseover" :type "single"}}}))
+
+;; Looking province-by-province, we can see how geographically concentrated the crisis is:
+(oz/view!
+ (merge-with merge oz-config italy-dimensions
+             {:title {:text "COVID19 cases in Italy, by province, per 100k inhabitants"}
+              :data {:name "italy"
+                     :values (update (json/read-value (java.io.File. "resources/public/public/data/limits_IT_provinces-original.geo.json")
+                                                      (json/object-mapper {:decode-key-fn true}))
+                                     :features
+                                     (fn [features]
+                                       (mapv (fn [feature]
+                                               (assoc feature
+                                                      :prov_name     (:prov_name (:properties feature))
+                                                      :Cases          (get-in province-data [(:prov_name (:properties feature)) :cases] 0)
+                                                      :Cases-per-100k (get-in province-data [(:prov_name (:properties feature)) :cases-per-100k] 0)))
+                                             features)))
+                     :format {:property "features"}},
+              :mark {:type "geoshape" :stroke "white" :strokeWidth 1}
+              :encoding {:color {:field "Cases-per-100k",
+                                 :type "quantitative"
+                                 :scale {:domain [0 (apply max (map :cases-per-100k (vals province-data)))]}}
+                         :tooltip [{:field "prov_name" :type "nominal"}
+                                   {:field "Cases-per-100k" :type "quantitative"}]}
+              :selection {:highlight {:on "mouseover" :type "single"}}}))
