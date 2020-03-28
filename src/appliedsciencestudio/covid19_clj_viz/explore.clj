@@ -3,8 +3,7 @@
 
   Intended to be executed one form at a time, interactively in your
   editor-connected REPL"
-  (:require [appliedsciencestudio.covid19-clj-viz.china :as china]
-            [appliedsciencestudio.covid19-clj-viz.deutschland :as deutschland]
+  (:require [appliedsciencestudio.covid19-clj-viz.italia :as italia]
             [appliedsciencestudio.covid19-clj-viz.sources.johns-hopkins :as jh]
             [appliedsciencestudio.covid19-clj-viz.sources.world-bank :as world-bank]
             [clojure.string :as string]
@@ -29,18 +28,17 @@
 
 (def oz-config
   "Default settings for Oz visualizations"
-  (let [font "IBM Plex Mono"]
-    {:config {:style {:cell {:stroke "transparent"}}
-              :legend {:labelFont font
-                       :labelFontSize 12
-                       :titleFont "IBM Plex Mono"
-                       :gradientThickness 40}
-              :axis {:labelFont font
-                     :titleFont font
-                     :titleFontSize 20}}
-     :title {:font "IBM Plex Sans"
-             :fontSize 14
-             :anchor "middle"}}))
+  {:config {:style {:cell {:stroke "transparent"}}
+            :legend {:labelFont (:mono applied-science-font)
+                     :labelFontSize 12
+                     :titleFont (:mono applied-science-font)
+                     :gradientThickness 40}
+            :axis {:labelFont (:mono applied-science-font)
+                   :titleFont (:mono applied-science-font)
+                   :titleFontSize 20}}
+   :title {:font (:sans applied-science-font)
+           :fontSize 14
+           :anchor "middle"}})
 
 
 ;;;; ===========================================================================
@@ -73,6 +71,7 @@
                         :sort nil}}}))
 
 
+;;;; ===========================================================================
 ;;;; Cases over time
 
 (defn compare-cases-in [c]
@@ -95,19 +94,22 @@
                        :type "deaths"
                        :country c})
                     (jh/new-daily-cases-in :deaths c)))
-       ;; only since 15 February
+       ;; only 15 February - 11 March
        (filter (comp (fn [d] (or (and (= 2 (Integer/parseInt (subs d 5 7)))
                                      (<= 15 (Integer/parseInt (subs d 8 10))))
-                                (< 2 (Integer/parseInt (subs d 5 7)))))
+                                (and (= 3 (Integer/parseInt (subs d 5 7)))
+                                     (> 12 (Integer/parseInt (subs d 8 10))))))
                      :date))))
 
 
 ;;;; Grouped bar chart comparing daily new cases, by kind, in Italy & South Korea
+;; See https://twitter.com/daveliepmann/status/1237740992905838593
+;; XXX please note the date range in `compare-cases-in`
 ;; mimicking https://twitter.com/webdevMason/status/1237610911193387008/photo/1
 (oz/view! (merge-with
            merge oz-config
            {:title {:text "COVID-19, Italy & South Korea: daily new cases"
-                    :font "IBM Plex Mono"
+                    :font (:mono applied-science-font)
                     :fontSize 30
                     :anchor "middle"}
             :width {:step 16}
@@ -144,10 +146,13 @@
   
   )
 
+
+;;;; ===========================================================================
+;;;; Daily new cases in a particular country over the past N days
 (oz/view!
  (merge-with merge oz-config
-             {:title {:text "Daily new confirmed COVID-19 cases in Germany"
-                      :font "IBM Plex Mono"
+             {:title {:text "Daily new confirmed COVID-19 cases"
+                      :font (:mono applied-science-font)
                       :fontSize 30
                       :anchor "middle"}
               :width 500 :height 325
@@ -167,3 +172,63 @@
                          :tooltip {:field "cases" :type "quantitative"}
                          :color {:field "country" :type "nominal"
                                  :scale {:range (mapv val applied-science-palette)}}}}))
+
+
+;;;; ===========================================================================
+;;;; Coronavirus cases in Italy, by region and province
+
+;; Dontributed by David Schmudde
+
+(def italia-region-geojson-with-data
+  (update (json/read-value (java.io.File. "resources/public/public/data/limits_IT_regions-original.geo.json")
+                           (json/object-mapper {:decode-key-fn true}))
+          :features
+          (fn [features]
+            (mapv (fn [feature]
+                    (assoc feature
+                           :reg_name     (:reg_name (:properties feature))
+                           :Cases          (get-in italia/region-data [(:reg_name (:properties feature)) :cases] 0)
+                           :Cases-per-100k (get-in italia/region-data [(:reg_name (:properties feature)) :cases-per-100k] 0)))
+                  features))))
+
+(def italy-dimensions
+  {:width 550 :height 700})
+
+;; Regionally, we can see the north is affected strongly
+(oz/view!
+ (merge-with merge oz-config italy-dimensions
+             {:title {:text "COVID19 cases in Italy, by province, per 100k inhabitants"}
+              :data {:name "italy"
+                     :values italia-region-geojson-with-data
+                     :format {:property "features"}},
+              :mark {:type "geoshape" :stroke "white" :strokeWidth 1}
+              :encoding {:color {:field "Cases-per-100k",
+                                 :type "quantitative"
+                                 :scale {:domain [0 (apply max (map :cases-per-100k (vals italia/region-data)))]}}
+                         :tooltip [{:field "reg_name" :type "nominal"}
+                                   {:field "Cases" :type "quantitative"}]}
+              :selection {:highlight {:on "mouseover" :type "single"}}}))
+
+;; Looking province-by-province, we can see how geographically concentrated the crisis is:
+(oz/view!
+ (merge-with merge oz-config italy-dimensions
+             {:title {:text "COVID19 cases in Italy, by province, per 100k inhabitants"}
+              :data {:name "italy"
+                     :values (update (json/read-value (java.io.File. "resources/public/public/data/limits_IT_provinces-original.geo.json")
+                                                      (json/object-mapper {:decode-key-fn true}))
+                                     :features
+                                     (fn [features]
+                                       (mapv (fn [feature]
+                                               (assoc feature
+                                                      :prov_name     (:prov_name (:properties feature))
+                                                      :Cases          (get-in italia/province-data [(:prov_name (:properties feature)) :cases] 0)
+                                                      :Cases-per-100k (get-in italia/province-data [(:prov_name (:properties feature)) :cases-per-100k] 0)))
+                                             features)))
+                     :format {:property "features"}},
+              :mark {:type "geoshape" :stroke "white" :strokeWidth 1}
+              :encoding {:color {:field "Cases-per-100k",
+                                 :type "quantitative"
+                                 :scale {:domain [0 (apply max (map :cases-per-100k (vals italia/province-data)))]}}
+                         :tooltip [{:field "prov_name" :type "nominal"}
+                                   {:field "Cases-per-100k" :type "quantitative"}]}
+              :selection {:highlight {:on "mouseover" :type "single"}}}))
