@@ -35,11 +35,11 @@
           :features
           (fn [features]
             (mapv (fn [feature]
-                    (let [cases (get-in india/india-data [(:NAME_1 (:properties feature)) :confirmed] 0)
+                    (let [cases (get-in india-data [(:NAME_1 (:properties feature)) :confirmed] 0)
                           cases (if (not(= 0 cases))
                                   (Long/parseLong cases)
                                   cases)
-                          pop   (get india/state-population (:NAME_1 (:properties feature)))
+                          pop   (get state-population (:NAME_1 (:properties feature)))
                           pop (if (not(= 0 pop))
                                 (Long/parseLong (string/replace pop "," ""))
                                 pop)
@@ -49,8 +49,8 @@
                       (assoc feature
                         :State          (:NAME_1 (:properties feature))
                         :Cases          cases
-                        :Deaths         (get-in india/india-data [(:NAME_1 (:properties feature)) :deaths] 0)
-                        :Recovered      (get-in india/india-data [(:NAME_1 (:properties feature)) :recovered] 0)
+                        :Deaths         (get-in india-data [(:NAME_1 (:properties feature)) :deaths] 0)
+                        :Recovered      (get-in india-data [(:NAME_1 (:properties feature)) :recovered] 0)
                         :Cases-per-100k cases-per-100k)))
 
                   features))))
@@ -82,7 +82,7 @@
 
 (oz/view!(merge oz-config
                 {:title "Confirmed COVID19 cases in India",
-                 :data {:values (->> india/india-data
+                 :data {:values (->> india-data
                                      vals
                                      (map #(select-keys % [:state :confirmed]))
                                      (reduce (fn [acc m]
@@ -111,7 +111,7 @@
                                           (conj acc {:state-province (:province-state m)
                                                      :confirmed (get m date)}))
                                         [])
-                                (concat (->> india/india-data
+                                (concat (->> india-data
                                              vals
                                              (map (comp #(select-keys % [:state-province :confirmed])
                                                         #(rename-keys % {:state :state-province})))
