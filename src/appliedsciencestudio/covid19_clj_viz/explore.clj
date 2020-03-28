@@ -24,29 +24,29 @@
 
 ;; Sorted and with some rearranging around `province/country`.
 (oz/view!
- (merge oz-config
-        {:title "COVID19 cases in selected countries",
-         :width 800, :height 400
-         :data {:values (->> jh/confirmed
-                             (map #(select-keys % [:province-state :country-region jh/last-reported-date]))
-                             ;; restrict to countries we're interested in:
-                             (filter (comp #{"China" "Mainland China"
-                                             "Iran"
-                                             "Italy" "Spain"
-                                             "Germany"} ;; FIXME change to suit your questions
-                                           :country-region))
-                             (reduce (fn [acc {:keys [province-state country-region] :as m}]
-                                       (conj acc {:location (if (string/blank? province-state)
-                                                              country-region
-                                                              (str province-state ", " country-region))
-                                                  :cases (get m jh/last-reported-date)}))
-                                     [])
-                             (remove (comp #{"Hubei, Mainland China"} :location))
-                             (sort-by :cases))},
-         :mark {:type "bar" :color "#9085DA"}
-         :encoding {:x {:field "cases", :type "quantitative"}
-                    :y {:field "location", :type "ordinal"
-                        :sort nil}}}))
+ (merge-with merge oz-config
+             {:title {:text "COVID19 cases in selected countries"}
+              :width 800, :height 400
+              :data {:values (->> jh/confirmed
+                                  (map #(select-keys % [:province-state :country-region jh/last-reported-date]))
+                                  ;; restrict to countries we're interested in:
+                                  (filter (comp #{"China" "Mainland China"
+                                                  "Iran"
+                                                  "Italy" "Spain"
+                                                  "Germany"} ;; FIXME change to suit your questions
+                                                :country-region))
+                                  (reduce (fn [acc {:keys [province-state country-region] :as m}]
+                                            (conj acc {:location (if (string/blank? province-state)
+                                                                   country-region
+                                                                   (str province-state ", " country-region))
+                                                       :cases (get m jh/last-reported-date)}))
+                                          [])
+                                  (remove (comp #{"Hubei, Mainland China"} :location))
+                                  (sort-by :cases))},
+              :mark {:type "bar" :color "#9085DA"}
+              :encoding {:x {:field "cases", :type "quantitative"}
+                         :y {:field "location", :type "ordinal"
+                             :sort nil}}}))
 
 
 ;;;; ===========================================================================
@@ -84,35 +84,35 @@
 ;; See https://twitter.com/daveliepmann/status/1237740992905838593
 ;; XXX please note the date range in `compare-cases-in`
 ;; mimicking https://twitter.com/webdevMason/status/1237610911193387008/photo/1
-(oz/view! (merge-with
-           merge oz-config
-           {:title {:text "COVID-19, Italy & South Korea: daily new cases"
-                    :font (:mono applied-science-font)
-                    :fontSize 30
-                    :anchor "middle"}
-            :width {:step 16}
-            :height 325
-            :config {:view {:stroke "transparent"}}
-            :data {:values (concat (compare-cases-in "Korea, South") ;; NB: prior to ~March 11, this was "South Korea". Then "Republic of Korea" until ~March 16
-                                   (compare-cases-in "Italy"))},
-            :mark "bar"
-            :encoding {:column {:field "date" :type "temporal" :spacing 10 :timeUnit "monthday"},
-                       :x {:field "type" :type "nominal" :spacing 10
-                           :axis {:title nil
-                                  :labels false}}
-                       :y {:field "cases", :type "quantitative"
-                           ;; :scale {:domain [0 2000]}
-                           :axis {:title nil :grid false}},
-                       :color {:field "type", :type "nominal"
-                               :scale {:range ["#f3cd6a" "#de6a83" "#70bebf"]}
-                               :legend {:orient "top"
-                                        :title nil
-                                        ;; this is clearly not 800px as
-                                        ;; the docs claim, but it's the
-                                        ;; size I want:
-                                        :symbolSize 800
-                                        :labelFontSize 24}}
-                       :row {:field "country" :type "nominal"}}}))
+(oz/view!
+ (merge-with merge oz-config
+             {:title {:text "COVID-19, Italy & South Korea: daily new cases"
+                      :font (:mono applied-science-font)
+                      :fontSize 30
+                      :anchor "middle"}
+              :width {:step 16}
+              :height 325
+              :config {:view {:stroke "transparent"}}
+              :data {:values (concat (compare-cases-in "Korea, South") ;; NB: prior to ~March 11, this was "South Korea". Then "Republic of Korea" until ~March 16
+                                     (compare-cases-in "Italy"))},
+              :mark "bar"
+              :encoding {:column {:field "date" :type "temporal" :spacing 10 :timeUnit "monthday"},
+                         :x {:field "type" :type "nominal" :spacing 10
+                             :axis {:title nil
+                                    :labels false}}
+                         :y {:field "cases", :type "quantitative"
+                             ;; :scale {:domain [0 2000]}
+                             :axis {:title nil :grid false}},
+                         :color {:field "type", :type "nominal"
+                                 :scale {:range ["#f3cd6a" "#de6a83" "#70bebf"]}
+                                 :legend {:orient "top"
+                                          :title nil
+                                          ;; this is clearly not 800px as
+                                          ;; the docs claim, but it's the
+                                          ;; size I want:
+                                          :symbolSize 800
+                                          :labelFontSize 24}}
+                         :row {:field "country" :type "nominal"}}}))
 
 (comment
   ;; last 10 days of new cases in Deutschland

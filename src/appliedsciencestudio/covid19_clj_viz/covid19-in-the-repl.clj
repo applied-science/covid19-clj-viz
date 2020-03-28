@@ -142,21 +142,22 @@
 ;;;; Deceptive version of that same map
 ;;    - red has emotional valence ["#fde5d9" "#a41e23"]
 ;;    - we report cases without taking population into account
-(oz/view! (merge oz-config germany-dimensions
-                 {:title "COVID19 cases in Germany (*not* population-scaled)"
-                  :data {:name "germany"
-                         ;; FIXME this keeps getting cached somewhere in Firefox or Oz
-                         ;; :url "/public/data/deutschland-bundeslaender.geo.json",
-                         :values deutschland-geojson-with-data
-                         :format {:property "features"}},
-                  :mark {:type "geoshape"  :stroke "white" :strokeWidth 1}
-                  :encoding {:color {:field "Cases",
-                                     :type "quantitative"
-                                     :scale { ;; from https://www.esri.com/arcgis-blog/products/product/mapping/mapping-coronavirus-responsibly/
-                                             :range ["#fde5d9" "#a41e23"]}}
-                             :tooltip [{:field "Bundesland" :type "nominal"}
-                                       {:field "Cases" :type "quantitative"}]}
-                  :selection {:highlight {:on "mouseover" :type "single"}}}))
+(oz/view!
+ (merge-with merge oz-config germany-dimensions
+             {:title {:text "COVID19 cases in Germany (*not* population-scaled)"}
+              :data {:name "germany"
+                     ;; FIXME this keeps getting cached somewhere in Firefox or Oz
+                     ;; :url "/public/data/deutschland-bundeslaender.geo.json",
+                     :values deutschland-geojson-with-data
+                     :format {:property "features"}},
+              :mark {:type "geoshape"  :stroke "white" :strokeWidth 1}
+              :encoding {:color {:field "Cases",
+                                 :type "quantitative"
+                                 :scale { ;; from https://www.esri.com/arcgis-blog/products/product/mapping/mapping-coronavirus-responsibly/
+                                         :range ["#fde5d9" "#a41e23"]}}
+                         :tooltip [{:field "Bundesland" :type "nominal"}
+                                   {:field "Cases" :type "quantitative"}]}
+              :selection {:highlight {:on "mouseover" :type "single"}}}))
 
 
 ;;;; ===========================================================================
@@ -171,32 +172,32 @@
  ;; NB: the situation and therefore the data have changed dramatically
  ;; since the article was published, so this chart is _very_
  ;; different!
- (merge oz-config
-        {:title "Confirmed COVID19 cases in China and Germany",
-         :data {:values (let [date "2020-03-19"]
-                          (->> jh/confirmed
-                               ;; Notice improved readability from working with seq of maps:
-                               (map #(select-keys % [:province-state :country-region date]))
-                               (filter (comp #{"China" "Mainland China" "Germany"} :country-region))
-                               (reduce (fn [acc m]
-                                         (conj acc {:state-province (if (string/blank? (:province-state m))
-                                                                      "(All German federal states)"
-                                                                      (:province-state m))
-                                                    :cases (get m date)}))
-                                       [])
-                               (concat (->> deutschland/bundeslaender-data
-                                            vals
-                                            (remove (comp #{"Gesamt"} :bundesland))
-                                            (map (comp #(select-keys % [:state-province :cases])
-                                                       #(rename-keys % {:bundesland :state-province})))
-                                            (sort-by :state-province)))
-                               ;; ;; FIXME this is the line to toggle:
-                               (remove (comp #{"Hubei"} :state-province))
-                               (sort-by :cases)))},
-         :mark {:type "bar" :color "#9085DA"}
-         :encoding {:x {:field "cases", :type "quantitative"}
-                    :y {:field "state-province", :type "ordinal"
-                        :sort nil}}}))
+ (merge-with merge oz-config
+             {:title {:text "Confirmed COVID19 cases in China and Germany"}
+              :data {:values (let [date "2020-03-19"]
+                               (->> jh/confirmed
+                                    ;; Notice improved readability from working with seq of maps:
+                                    (map #(select-keys % [:province-state :country-region date]))
+                                    (filter (comp #{"China" "Mainland China" "Germany"} :country-region))
+                                    (reduce (fn [acc m]
+                                              (conj acc {:state-province (if (string/blank? (:province-state m))
+                                                                           "(All German federal states)"
+                                                                           (:province-state m))
+                                                         :cases (get m date)}))
+                                            [])
+                                    (concat (->> deutschland/bundeslaender-data
+                                                 vals
+                                                 (remove (comp #{"Gesamt"} :bundesland))
+                                                 (map (comp #(select-keys % [:state-province :cases])
+                                                            #(rename-keys % {:bundesland :state-province})))
+                                                 (sort-by :state-province)))
+                                    ;; ;; FIXME this is the line to toggle:
+                                    (remove (comp #{"Hubei"} :state-province))
+                                    (sort-by :cases)))},
+              :mark {:type "bar" :color "#9085DA"}
+              :encoding {:x {:field "cases", :type "quantitative"}
+                         :y {:field "state-province", :type "ordinal"
+                             :sort nil}}}))
 
 
 ;;;; ===========================================================================
@@ -205,15 +206,16 @@
 (def china-dimensions
   {:width 570 :height 450})
 
-(oz/view! (merge oz-config china-dimensions
-                 {:data {:name "map"
-                         :url "/public/data/china-provinces.geo.json"
-                         :format {:property "features"}},
-                  :mark {:type "geoshape" :stroke "white" :strokeWidth 1}
-                  :encoding {:color {:field "cases-per-100k",
-                                     :type "quantitative"}
-                             :tooltip [{:field "province" :type "nominal"}
-                                       {:field "cases" :type "quantitative"}]}}))
+(oz/view!
+ (merge-with merge oz-config china-dimensions
+             {:data {:name "map"
+                     :url "/public/data/china-provinces.geo.json"
+                     :format {:property "features"}},
+              :mark {:type "geoshape" :stroke "white" :strokeWidth 1}
+              :encoding {:color {:field "cases-per-100k",
+                                 :type "quantitative"}
+                         :tooltip [{:field "province" :type "nominal"}
+                                   {:field "cases" :type "quantitative"}]}}))
 
 
 ;;;; ===========================================================================
@@ -224,23 +226,24 @@
 ;;  - uses red, which has inappropriate emotional valence
 ;; This is more visually appealing and _feels_ useful, but is actually quite deceptive.
 ;; (inspired by https://www.esri.com/arcgis-blog/products/product/mapping/mapping-coronavirus-responsibly/ )
-(oz/view! (merge oz-config china-dimensions
-                 {:title "COVID19 cases in China"
-                  :data {:name "map"
-                         :url "/public/data/china-provinces.geo.json",
-                         :format {:property "features"}},
-                  :mark {:type "geoshape" :stroke "white" :strokeWidth 1}
-                  :encoding {:color {:field "cases-binned",
-                                     :bin true
-                                     :type "quantitative"
-                                     :scale {:range ["#fde5d9"
-                                                     "#f9af91"
-                                                     "#f26a4d"
-                                                     "#e22b26"
-                                                     "#a41e23"]}}
-                             :tooltip [{:field "province" :type "nominal"}
-                                       {:field "cases" :type "quantitative"}
-                                       {:field "cases-per-100k" :type "quantitative"}]}}))
+(oz/view!
+ (merge-with merge oz-config china-dimensions
+             {:title {:text "COVID19 cases in China"}
+              :data {:name "map"
+                     :url "/public/data/china-provinces.geo.json",
+                     :format {:property "features"}},
+              :mark {:type "geoshape" :stroke "white" :strokeWidth 1}
+              :encoding {:color {:field "cases-binned",
+                                 :bin true
+                                 :type "quantitative"
+                                 :scale {:range ["#fde5d9"
+                                                 "#f9af91"
+                                                 "#f26a4d"
+                                                 "#e22b26"
+                                                 "#a41e23"]}}
+                         :tooltip [{:field "province" :type "nominal"}
+                                   {:field "cases" :type "quantitative"}
+                                   {:field "cases-per-100k" :type "quantitative"}]}}))
 
 
 ;;;; ===========================================================================
@@ -250,15 +253,16 @@
 ;; This requires the viewer to understand orders of magnitude, which
 ;; might be appropriate for data science but inappropriate for
 ;; journalism.
-(oz/view! (merge oz-config china-dimensions
-                 {:title "COVID19 cases in China per 100k inhabitants, log-scaled"
-                  :data {:name "map"
-                         :url "/public/data/china-provinces.geo.json",
-                         :format {:property "features"}},
-                  :mark {:type "geoshape" :stroke "white" :strokeWidth 1}
-                  :encoding {:color {:field "cases-per-100k",
-                                     :scale {:type "log"}
-                                     :type "quantitative"}
-                             :tooltip [{:field "province" :type "nominal"}
-                                       {:field "cases" :type "quantitative"}
-                                       {:field "cases-per-100k" :type "quantitative"}]}}))
+(oz/view!
+ (merge-with merge oz-config china-dimensions
+             {:title {:text "COVID19 cases in China per 100k inhabitants, log-scaled"}
+              :data {:name "map"
+                     :url "/public/data/china-provinces.geo.json",
+                     :format {:property "features"}},
+              :mark {:type "geoshape" :stroke "white" :strokeWidth 1}
+              :encoding {:color {:field "cases-per-100k",
+                                 :scale {:type "log"}
+                                 :type "quantitative"}
+                         :tooltip [{:field "province" :type "nominal"}
+                                   {:field "cases" :type "quantitative"}
+                                   {:field "cases-per-100k" :type "quantitative"}]}}))
