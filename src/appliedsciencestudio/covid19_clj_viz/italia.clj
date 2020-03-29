@@ -3,8 +3,7 @@
 
   Contributed by David Schmudde.
 
-  Relies on https://github.com/pcm-dpc/COVID-19 to be cloned into the
-  `resources` directory."
+  Relies on https://github.com/pcm-dpc/COVID-19 to be cloned into the `resources` directory."
   (:require [appliedsciencestudio.covid19-clj-viz.common :refer [oz-config]]
             [jsonista.core :as json]
             [meta-csv.core :as mcsv]
@@ -13,8 +12,8 @@
 ;;;;;;;;;;;;;;;;;;;;
 ;; Conform Functions
 
-;; First, an Italian-to-English translation mapping for header names.
 (def fields-it->en
+  "Mapping of CSV header names from Italian to their English translation."
   {;; For provinces (and some for regions too)
    "data"                    :date
    "stato"                   :state
@@ -58,21 +57,18 @@
   "REGION: The COVID numbers from Italy split one region into two. 'P.A. Bolzano' and 'P.A. Trento' should be combined into 'Trentino-Alto Adige/Südtirol.'"
   [region-covid-data]
   (let [keys-to-sum [:hospitalized :icu :tot-hospitalized :quarantined :tot-positives :new-positives :recovered :dead :cases :tests]
-        regions-to-combine (filter #(or (= "P.A. Bolzano" (:region-name %)) (= "P.A. Trento" (:region-name %))) region-covid-data)
-        name-combined-region (fn [combined-regions] (assoc combined-regions :region-name "Trentino-Alto Adige/Südtirol"))
-        remove-inexact-data (fn [combined-regions] (dissoc combined-regions :lat :lon))]
+        regions-to-combine (filter #(or (= "P.A. Bolzano" (:region-name %)) (= "P.A. Trento" (:region-name %))) region-covid-data)]
     (->> (map #(select-keys % keys-to-sum) regions-to-combine) ; grab the important keys from the regions we want to combine
          (reduce #(merge-with + %1 %2))                        ; add the info from each key together
          (conj (first regions-to-combine))                     ; add in the rest of the information (name, region number, etc...)
-         (name-combined-region)                                ; name the combined region
-         (remove-inexact-data)                                 ; cleanup: remove longitude and latitude because it no longer applies
+         ((fn name-combined-region [combined-regions] (assoc combined-regions :region-name "Trentino-Alto Adige/Südtirol")))
+         ((fn remove-inexact-data [combined-regions] (dissoc combined-regions :lat :lon))) ; lat/lon is no longer correct data
          (conj region-covid-data))))                           ; add this back into the main collection
 
 (defn conform-to-territory-name
   "Index each map of territory information by territory name."
   [territories territory-key]
-  (->> (map #(vector (territory-key %) %) territories)
-       (into {})))
+  (into {} (map #(vector (territory-key %) %) territories)))
 
 (defn compute-cases-per-100k
   "If the data provided includes a valid population number, calculate the number for :cases-per-100k. Else set :cases-per-100k to nil.
