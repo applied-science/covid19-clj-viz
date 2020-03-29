@@ -30,10 +30,12 @@ other, similar ways:
    COVID-19
    situation](https://alanmarazzi.gitlab.io/blog/posts/2020-3-19-italy-covid/)
    without Panthera, as a demonstration of using orthodox Clojure
- - `italia` visualizes COVID-19 cases in Italy *[contributed by David
-   Schmudde]*
- - `india` visualizes COVID-19 cases in India *[contributed by Noor
-   Afshan Fathima]*
+ - `italia` <img align="right"
+   src="resources/public/public/img/italy-by-province.png"/>visualizes
+   COVID-19 cases in Italy *[contributed by David Schmudde]*
+ - `india` <img align="right"
+   src="resources/public/public/img/india.png"/>visualizes COVID-19
+   cases in India *[contributed by Noor Afshan Fathima]*
  - `south-america` visualizes COVID-19 cases in South America <img
    align="right" src="resources/public/public/img/peru.png"/><img
    align="right" src="resources/public/public/img/south-america.png"/>
