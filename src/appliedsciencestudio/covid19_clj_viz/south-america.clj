@@ -1,25 +1,35 @@
 (ns appliedsciencestudio.covid19-clj-viz.south-america
-  "Visualization of coronavirus situation in South America
+  "Visualization of coronavirus situation in South America.
+  
   Contributed by Yuliana Apaza and Paula Asto."
-  (:require [clojure.data.csv :as csv]
-            [appliedsciencestudio.covid19-clj-viz.sources.johns-hopkins :as jh]
+  (:require [appliedsciencestudio.covid19-clj-viz.sources.johns-hopkins :as jh]
+            [appliedsciencestudio.covid19-clj-viz.common :refer [oz-config]]
+            [meta-csv.core :as mcsv]
             [clojure.set :refer [rename-keys]]
             [jsonista.core :as json]
             [oz.core :as oz]))
 
 (def southamerica-cases
   "Current number of COVID19 cases in South America, by countries"
-  (->> jh/confirmed
-       (map #(select-keys % [:country-region "2020-03-28"]))
-       (filter (comp #{"Peru" "Brazil" "Argentina"
-                       "Chile" "Bolivia" "Colombia"
-                       "Ecuador" "Uruguay" "Paraguay" "Venezuela"
-                       "Suriname" "Guyana"} :country-region))
-       (map #(rename-keys % {"2020-03-28" :cases}))))
+  (let [date "2020-03-28"]
+    (->> jh/confirmed
+         (map #(select-keys % [:country-region date]))
+         (filter (comp #{"Peru" "Brazil" "Argentina"
+                         "Chile" "Bolivia" "Colombia"
+                         "Ecuador" "Uruguay" "Paraguay" "Venezuela"
+                         "Suriname" "Guyana"}
+                       :country-region))
+         (reduce (fn [m row]
+                   (assoc m (:country-region row) (get row date 0)))
+                 {}))))
 
 (def peru-cases
-  "Current number of COVID19 cases in Peru, by regions"
-  (->> (csv/read-csv (slurp "resources/peru.covid19cases-march28.csv"))))
+  "Mapping from Peruvian region to number of cases (as of 28 March 2020)."
+  (reduce (fn [m {:keys [region cases]}]
+            (assoc m region cases))
+          {}
+          (mcsv/read-csv "resources/peru.covid19cases-march28.csv"
+                         {:fields [:region :cases]})))
 
 (def south-america-geojson-with-data
   (update (json/read-value (java.io.File. "resources/public/public/data/southamerica.geo.json")
@@ -27,9 +37,10 @@
           :features
           (fn [features]
             (mapv (fn [feature]
-                    (let [cases (:cases (first (filter (comp #{(:geounit (:properties feature))} :country-region) southamerica-cases)))]
+                    (let [country (:geounit (:properties feature))
+                          cases (get southamerica-cases country)]
                       (assoc feature
-                             :Country (:geounit (:properties feature))
+                             :Country country
                              :Cases cases)))
                   features))))
 
@@ -39,32 +50,22 @@
           :features
           (fn [features]
             (mapv (fn [feature]
-                    (let [cases (nth (first (filter (comp #{(:NOMBDEP (:properties feature))} first) peru-cases)) 1)]
+                    (let [region (:NOMBDEP (:properties feature))
+                          cases (get peru-cases region 0)]
                       (assoc feature
-                             :Region (:NOMBDEP (:properties feature))
-                             :Cases (get peru-cases (:NOMBDEP (:properties feature)) cases))))
+                             :Region region
+                             :Cases (get peru-cases region cases))))
                   features))))
 
-(oz/start-server! 8082)
+(comment
+  (oz/start-server! 8082)
 
-(def oz-config
-  "Default settings for Oz visualizations"
-  (let [font "IBM Plex Mono"]
-    {:config {:style {:cell {:stroke "transparent"}}
-              :legend {:labelFont font
-                       :labelFontSize 12
-                       :titleFont "IBM Plex Mono"
-                       :gradientThickness 40}
-              :axis {:labelFont font
-                     :titleFont font
-                     :titleFontSize 20}}
-     :title {:font "IBM Plex Sans"
-             :fontSize 16
-             :anchor "middle"}}))
+  )
 
 (def map-dimensions
   {:width 550 :height 700})
 
+;; TODO scale by population
 (oz/view!
  (merge-with merge oz-config map-dimensions
              {:title {:text "COVID-19 cases in South America by country"}
@@ -72,13 +73,12 @@
                      :values south-america-geojson-with-data
                      :format {:property "features"}}
               :mark {:type "geoshape" :stroke "white" :strokeWidth 1}
-              :encoding {:color {:field "Cases"
-                                 :type "quantitative"
-                                 :scale {:range ["#fde5d9" "#a41e23"]}}
+              :encoding {:color {:field "Cases" :type "quantitative"}
                          :tooltip [{:field "Country" :type "nominal"}
                                    {:field "Cases" :type "quantitative"}]}
               :selection {:highlight {:on "mouseover" :type "single"}}}))
 
+;; TODO scale by population
 (oz/view!
  (merge-with merge oz-config map-dimensions
              {:title {:text "COVID-19 cases in Peru by Regions"}
