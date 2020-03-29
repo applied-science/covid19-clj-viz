@@ -35,8 +35,8 @@ other, similar ways:
  - `india` visualizes COVID-19 cases in India *[contributed by Noor
    Afshan Fathima]*
  - `south-america` visualizes COVID-19 cases in South America <img
-   align="right" width="250"
-   src="resources/public/public/img/screenshot-south-america-peru.png"/>
+   align="right" src="resources/public/public/img/peru.png"/><img
+   align="right" src="resources/public/public/img/south-america.png"/>
    by countries and in Peru by regions *[contributed by Yuliana Apaza
    and Paula Asto]*
  - `explore` is a grab-bag of general visual explorations – line & bar
