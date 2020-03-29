@@ -1,8 +1,9 @@
 {:paths ["resources" "src"]
  :deps {org.clojure/clojure {:mvn/version "1.10.1"}
+        org.clojure/tools.namespace {:mvn/version "1.0.0"}
         org.clojure/data.csv {:mvn/version "1.0.0"}
-        ngrunwald/meta-csv {:git/url "https://github.com/ngrunwald/meta-csv"
-                            :sha "58f91dfd4eb536af89ea1d69523497c747bd6554"}
+        hickory {:mvn/version "0.7.1"}
+        meta-csv {:mvn/version "0.1.0"}
         metasoarous/oz {:mvn/version "1.6.0-alpha6"} ;; for output to Vega
         metosin/jsonista {:mvn/version "0.2.5"}
         hickory {:mvn/version "0.7.1"}

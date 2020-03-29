@@ -11,3 +11,5 @@ pom.xml.asc
 /.nrepl-port
 .hgignore
 .hg/
+/resources/COVID-19/
+.idea/
