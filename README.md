@@ -44,10 +44,10 @@ similar ways:
  - `source/*` namespaces are for parsing of source data (e.g. Johns
    Hopkins, the World Bank) into usable structures
 
-<img align="right" src="resources/public/public/img/india.png"/>
-<img align="right" src="resources/public/public/img/italy-by-province.png"/>
-<img align="right" src="resources/public/public/img/peru.png"/>
-<img align="right" src="resources/public/public/img/south-america.png"/>
+<img src="resources/public/public/img/india.png"/>
+<img src="resources/public/public/img/italy-by-province.png"/>
+<img src="resources/public/public/img/peru.png"/>
+<img src="resources/public/public/img/south-america.png"/>
 
 Some namespaces depend on cloning other repos into `resources`. For
 instance, we put [data from Italy's Civil Protection
