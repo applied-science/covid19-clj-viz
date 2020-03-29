@@ -34,6 +34,11 @@ other, similar ways:
    Schmudde]*
  - `india` visualizes COVID-19 cases in India *[contributed by Noor
    Afshan Fathima]*
+ - `south-america` visualizes COVID-19 cases in South America by
+   countries and in Peru by regions *[contributed by Yuliana Apaza
+   and Paula Asto]*
+
+   ![south-america](screenshot-south-america-peru.png)
  - `explore` is a grab-bag of general visual explorations – line & bar
    charts, choropleths
  - `china` and `deutschland` are for transforming country-specific
