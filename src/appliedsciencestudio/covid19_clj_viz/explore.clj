@@ -153,6 +153,7 @@
                          :color {:field "country" :type "nominal"
                                  :scale {:range (mapv val applied-science-palette)}}}}))
 
+
 ;;;; ===========================================================================
 ;;;; Choropleth: European countries' COVID19 rate of infection
 ;; geojson from https://github.com/leakyMirror/map-of-europe/blob/master/GeoJSON/europe.geojson

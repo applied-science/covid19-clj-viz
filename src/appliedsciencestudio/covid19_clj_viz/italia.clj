@@ -57,7 +57,9 @@
   "REGION: The COVID numbers from Italy split one region into two. 'P.A. Bolzano' and 'P.A. Trento' should be combined into 'Trentino-Alto Adige/Südtirol.'"
   [region-covid-data]
   (let [keys-to-sum [:hospitalized :icu :tot-hospitalized :quarantined :tot-positives :new-positives :recovered :dead :cases :tests]
-        regions-to-combine (filter #(or (= "P.A. Bolzano" (:region-name %)) (= "P.A. Trento" (:region-name %))) region-covid-data)]
+        regions-to-combine (filter #(or (= "P.A. Bolzano" (:region-name %))
+                                        (= "P.A. Trento" (:region-name %)))
+                                   region-covid-data)
     (->> (map #(select-keys % keys-to-sum) regions-to-combine) ; grab the important keys from the regions we want to combine
          (reduce #(merge-with + %1 %2))                        ; add the info from each key together
          (conj (first regions-to-combine))                     ; add in the rest of the information (name, region number, etc...)
