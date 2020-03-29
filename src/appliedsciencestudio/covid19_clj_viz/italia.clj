@@ -82,7 +82,9 @@
               population (% :population)
               calc-cases (fn [x] (double (/ cases x)))
               per-100k (fn [x] (/ x 100000))]
-          (->> (if population ((comp calc-cases per-100k) population) nil)
+          (->> (if population
+                 ((comp calc-cases per-100k) population)
+                 nil)
                (assoc % :cases-per-100k))) province-data-with-pop))
 
 ;;;;;;;;;;;;;
