@@ -23,7 +23,6 @@ starting there:
 1. Evaluate forms one at a time, with a browser window open next to
    your editor so you can see the visualizatons as you go
 
-<img align="right" src="resources/public/public/img/italy-by-province.png"/>
 Other namespaces are for exploring and visualizing COVID-19 data in other,
 similar ways:
 
@@ -31,22 +30,24 @@ similar ways:
    COVID-19
    situation](https://alanmarazzi.gitlab.io/blog/posts/2020-3-19-italy-covid/)
    without Panthera, as a demonstration of using orthodox Clojure
- - <img align="right" src="resources/public/public/img/india.png"/>
-   `italia` visualizes COVID-19 cases in Italy *[contributed by David
+ - `italia` visualizes COVID-19 cases in Italy *[contributed by David
    Schmudde]*
  - `india` visualizes COVID-19 cases in India *[contributed by Noor
    Afshan Fathima]*
- - `south-america` visualizes COVID-19 cases in South America <img
-   align="right" src="resources/public/public/img/peru.png"/><img
-   align="right" src="resources/public/public/img/south-america.png"/>
-   by countries and in Peru by regions *[contributed by Yuliana Apaza
-   and Paula Asto]*
+ - `south-america` visualizes COVID-19 cases in South America by
+   countries and in Peru by regions *[contributed by Yuliana Apaza and
+   Paula Asto]*
  - `explore` is a grab-bag of general visual explorations – line & bar
    charts, choropleths
  - `china` and `deutschland` are for transforming country-specific
    data in support of visualizations
  - `source/*` namespaces are for parsing of source data (e.g. Johns
    Hopkins, the World Bank) into usable structures
+
+<img align="right" src="resources/public/public/img/india.png"/>
+<img align="right" src="resources/public/public/img/italy-by-province.png"/>
+<img align="right" src="resources/public/public/img/peru.png"/>
+<img align="right" src="resources/public/public/img/south-america.png"/>
 
 Some namespaces depend on cloning other repos into `resources`. For
 instance, we put [data from Italy's Civil Protection
