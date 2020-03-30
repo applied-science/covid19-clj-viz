@@ -1,5 +1,6 @@
 (ns appliedsciencestudio.covid19-clj-viz.deutschland
-  (:require [hickory.core :as hick]
+  (:require [clojure.string :as string]
+            [hickory.core :as hick]
             [hickory.select :as s]
             [meta-csv.core :as mcsv]))
 
@@ -46,6 +47,22 @@
                         :part-of state-name))
                      (s/select (s/tag :tr) counties))))
             (butlast (partition 2 (s/select (s/tag :tbody) covid-page))))))
+
+(comment ;;;; Berlin-specific historical data
+  (map (fn [[d n]]
+         {:date (str "2020-" (subs (name d) 6))
+          :cases (Integer/parseInt (string/replace n "," ""))
+          :place "Berlin"})
+       (dissoc (some (fn [m] (when (comp "Berlin" :name) m)) citypop-data)
+               :name :state :kind :part-of))
+
+  ;; I think I'll stop trying to get this data from citypop. It works
+  ;; today but I'm not confident it will work without refactoring
+  ;; tomorrow, since they changed the dates they report since the last
+  ;; I checked. This does not inspire confidence.
+
+  )
+
 
 ;;;; CSV parsing
 (defn coerce-type-from-string
