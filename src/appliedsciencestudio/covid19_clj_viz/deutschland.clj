@@ -33,20 +33,31 @@
       (apply str node)
       node)))
 
+(defn nonneg-min
+  "Returns least non-negative number from given `nums`, else `nil`."
+  [& nums]
+  (let [pos-nums (remove neg? nums)]
+    (when (seq pos-nums)
+      (apply min pos-nums))))
+
 (defn nix-parentheticals [s]
   (if (string? s)
-    (subs s 0 (let [i (max (.indexOf s "[") (.indexOf s "("))]
-                (if-not (neg? i) 
-                  i
-                  (count s))))
+    (subs s 0 (if-let [i (nonneg-min (.indexOf s "[")
+                                     (.indexOf s "("))]
+                i
+                (count s)))
     s))
 
-(comment
+(comment  
+  (nix-parentheticals "Date")
+  
   (nix-parentheticals "Germany, repatriated[c]")
 
   (nix-parentheticals "484 (2)")
 
   (nix-parentheticals "[d]")
+  
+  (nix-parentheticals "9794 [h] (101)")
   
   )
 
@@ -55,7 +66,6 @@
   [node]
   (cond (vector? node) (-> (apply str (mapcat deepest-text node))
                            (string/replace " " "")
-                           nix-parentheticals
                            string/trim)
         (map? node) (deepest-text (:content node))
         :else node))
@@ -86,24 +96,27 @@
       hick/parse
       hick/as-hickory))
 
+(def wiki-cumulative-infections-table
+  (apply map vector
+         ;; "Confirmed cumulative infections" table
+         (conj (butlast (drop 3 (nth (extract-tables wiki-page) 3)))
+               ["Date"
+                ;; Regions:
+                "Baden-Württemberg" "Bavaria" "Berlin" "Brandenburg" "Bremen"
+                "Hamburg" "Hesse" "Lower Saxony" "Mecklenburg-Vorpommern"
+                "North Rhine-Westphalia" "Rhineland-Palatinate" "Saarland"
+                "Saxony" "Saxony-Anhalt" "Schleswig-Holstein" "Thuringia"
+                "Germany, repatriated"
+                ;; Calculated/cumulative:
+                "Total infections"
+                "Total deaths"
+                "New cases"
+                "New deaths"])))
+
 (def cumulative-infections
   "Mapping from German states (and calculated fields) to case numbers by date."
-  (let [[hdr & rows]
-        (apply map vector
-               ;; "Confirmed cumulative infections" table
-               (conj (butlast (drop 3 (nth (extract-tables wiki-page) 3)))
-                     ["Date"
-                      ;; Regions:
-                      "Baden-Württemberg" "Bavaria" "Berlin" "Brandenburg" "Bremen"
-                      "Hamburg" "Hesse" "Lower Saxony" "Mecklenburg-Vorpommern"
-                      "North Rhine-Westphalia" "Rhineland-Palatinate" "Saarland"
-                      "Saxony" "Saxony-Anhalt" "Schleswig-Holstein" "Thuringia"
-                      "Germany, repatriated"
-                      ;; Calculated/cumulative:
-                      "Total infections"
-                      "Total deaths"
-                      "New cases"
-                      "New deaths"]))
+  (let [[hdr & rows] (map #(map (comp string/trim nix-parentheticals)
+                                %) wiki-cumulative-infections-table)
         ;; We expect the header to be Stringy dates, except for the
         ;; first, which we expect to be misleadingly labeled "Date"
         ;; but to actually contain place names or descriptions of
@@ -123,6 +136,32 @@
                                    (rest row))
                               (first row)))
                       rows)))))
+
+(defn parenthetical-num-or-0 [s]
+    (let [i1 (.indexOf s "(")
+          i2 (.indexOf s ")")]
+      (if (and (string? s) (pos? i1) (pos? i2))
+        (Integer/parseInt (subs s (inc i1) i2))
+        0)))
+
+(def cumulative-deaths
+  "Mapping from German states to number of coronavirus deaths, by date."
+  (let [[hdr & rows] (conj (map #(conj (map parenthetical-num-or-0 (rest %))
+                                       (first %))
+                                (rest wiki-cumulative-infections-table))
+                           (first wiki-cumulative-infections-table))
+        ;; We expect the header to be Stringy dates, except for the
+        ;; first, which we expect to be misleadingly labeled "Date"
+        ;; but to actually contain place names or descriptions of
+        ;; calculated fields.
+        clean-hdr (conj (map wiki-date->utc (rest hdr))
+                        :label)]
+    (dissoc (reduce (fn [acc m]
+               (assoc acc (normalize-bundesland (:label m))
+                      (dissoc m :label)))
+             {}
+             (map zipmap (repeat clean-hdr) rows))
+            "New cases" "Total infections" "Total deaths" "New deaths")))
 
 (comment
   (sort (keys cumulative-infections))
@@ -162,6 +201,24 @@
 ;; TODO cases in Germany
 ;; TODO deaths in Berlin
 ;; TODO mark special dates, e.g. quarantine
+
+
+;;;; ===========================================================================
+;;;; Deaths in <PLACE> (e.g. Berlin) over time
+(oz/view!
+ (merge-with merge oz-config
+             {:title {:text "Deaths in Berlin over time"}
+              :width 1200 :height 700
+              :data {:values (->> (get cumulative-deaths "Berlin"
+                                       #_ "Bayern"
+                                       #_"Nordrhein-Westfalen")
+                                  (remove (comp zero? val))
+                                  (map #(assoc {} :date (key %) :cases (val %))))}
+              :mark {:type "line" :strokeWidth 4 :point "transparent"
+                     :color (:green applied-science-palette)}
+              :encoding {:x {:field "date" :type "temporal" :timeUnit "date"}
+                         :y {:field "cases", :type "quantitative"}
+                         :tooltip {:field "cases", :type "quantitative"}}}))
 
 
 ;;;; Scraping case data for areas of Germany
