@@ -111,7 +111,7 @@
         clean-hdr (conj (map wiki-date->utc (rest hdr))
                         :label)]
     (reduce (fn [acc m]
-              (assoc acc (:label m)
+              (assoc acc (normalize-bundesland (:label m))
                      (dissoc m :label)))
             {}
             (map zipmap (repeat clean-hdr)
@@ -143,15 +143,17 @@
 ;;;; Cases in Berlin over time
 (oz/view!
  (merge-with merge oz-config
-             {:title {:text "Cases in Berlin over time"}
+             {:title {:text "Cases in selected German states over time"}
               :width 1200 :height 700
-              :data {:values (concat (cumulative-cases-in "Bavaria" #_"Total infections")
-                                     (cumulative-cases-in "Total deaths")
-                                     (cumulative-cases-in "Berlin"))}
+              :data {:values #_(cumulative-cases-in "Total infections")
+                     (concat (cumulative-cases-in "Bayern")
+                             (cumulative-cases-in "Nordrhein-Westfalen")
+                             (cumulative-cases-in "Berlin"))}
               :mark {:type "line" :strokeWidth 4 :point "transparent"
                      :color (:purple applied-science-palette)}
               :encoding {:x {:field "date" :type "temporal"}
                          :y {:field "cases", :type "quantitative"}
+                         :tooltip {:field "cases", :type "quantitative"}
                          :color {:field "place" :type "ordinal"
                                  :scale {:range [(:green applied-science-palette)
                                                  (:purple applied-science-palette)
