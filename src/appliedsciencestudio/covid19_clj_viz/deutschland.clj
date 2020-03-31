@@ -89,6 +89,12 @@
                         "apr" "04"} mm)
                       (format "%02d" (Integer/parseInt dd))])))
 
+(defn wiki-table-elm->num [s]
+  (if (or (= s "—")
+          (string/blank? s))
+    0
+    (Integer/parseInt s)))
+
 (def wiki-page
   "2020 coronavirus pandemic in Germany"
   (-> "https://en.m.wikipedia.org/wiki/2020_coronavirus_pandemic_in_Germany"
@@ -121,21 +127,12 @@
         ;; first, which we expect to be misleadingly labeled "Date"
         ;; but to actually contain place names or descriptions of
         ;; calculated fields.
-        clean-hdr (conj (map wiki-date->utc (rest hdr))
-                        :label)]
-    (reduce (fn [acc m]
-              (assoc acc (normalize-bundesland (:label m))
-                     (dissoc m :label)))
-            {}
-            (map zipmap (repeat clean-hdr)
-                 (map (fn [row]
-                        (conj (map (fn [s] (if (or (= s "—")
-                                                  (string/blank? s))
-                                            0
-                                            (Integer/parseInt s)))
-                                   (rest row))
-                              (first row)))
-                      rows)))))
+        clean-hdr (map wiki-date->utc (rest hdr))]
+    (reduce (fn [m [label & row]]
+              (assoc m (normalize-bundesland label) ;; NB labels also include calculated fields
+                     (zipmap clean-hdr
+                             (map wiki-table-elm->num row))))
+            {} rows)))
 
 (defn parenthetical-num-or-0 [s]
     (let [i1 (.indexOf s "(")
@@ -219,6 +216,22 @@
               :encoding {:x {:field "date" :type "temporal" :timeUnit "date"}
                          :y {:field "cases", :type "quantitative"}
                          :tooltip {:field "cases", :type "quantitative"}}}))
+
+
+;;;; ===========================================================================
+;;;; Deaths in Germany over time, log scale
+(oz/view!
+ (merge-with merge oz-config
+             {:title {:text "Deaths in Berlin over time, log-scale"}
+              :width 1200 :height 700
+              :data {:values (->> (get cumulative-infections "Total deaths")
+                                  (remove (comp zero? val))
+                                  (map #(assoc {} :date (key %) :deaths (Math/log (val %)))))}
+              :mark {:type "line" :strokeWidth 4 :point "transparent"
+                     :color (:pink applied-science-palette)}
+              :encoding {:x {:field "date" :type "temporal" :timeUnit "date"}
+                         :y {:field "deaths", :type "quantitative"}
+                         :tooltip {:field "deaths", :type "quantitative"}}}))
 
 
 ;;;; Scraping case data for areas of Germany
