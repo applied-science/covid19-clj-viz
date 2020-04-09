@@ -90,23 +90,6 @@
                                0))))
                   features))))
 
-(comment ;;;; Check populations (nonce code)
-  ;; Which countries are we looking at?
-  (keys southamerica-cases)
-  
-  (map :country (:features south-america-geojson-with-data))
-
-  ;; Which country do we not have population data for?
-  (map (juxt identity #(get wb/country-populations %))
-       (map :country (:features south-america-geojson-with-data)))
-
-
-  (map (juxt identity #(get peru-region-populations %))
-       (map :region (:features peru-geojson-with-data)))
-
-  
-  )
-
 (def peru-geojson-with-data
   (update (json/read-value (java.io.File. "resources/public/public/data/peru-regions.geo.json")
                            (json/object-mapper {:decode-key-fn true}))
@@ -125,12 +108,30 @@
                                0))))
                   features))))
 
-(def map-dimensions
-  {:width 550 :height 700})
+(comment ;;;; Check populations (nonce code)
+  ;; Which countries are we looking at?
+  (keys southamerica-cases)
+  
+  (map :country (:features south-america-geojson-with-data))
+
+  ;; Which country do we not have population data for?
+  (map (juxt identity #(get wb/country-populations %))
+       (map :country (:features south-america-geojson-with-data)))
+
+
+  (map (juxt identity #(get peru-region-populations %))
+       (map :region (:features peru-geojson-with-data)))
+
+  
+  )
 
 
 ;;;; ===========================================================================
 ;;;; COVID-19 cases in South America, by country, scaled to population
+
+(def map-dimensions
+  {:width 550 :height 700})
+
 (waqi/gaze!
  (merge-with merge vega-lite-config map-dimensions
              {:title {:text "COVID-19 cases in South America by country"}
