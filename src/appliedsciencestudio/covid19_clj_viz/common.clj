@@ -14,8 +14,8 @@
   {:mono "IBM Plex Mono"
    :sans "IBM Plex Sans"})
 
-(def oz-config
-  "Default settings for Oz visualizations"
+(def vega-lite-config
+  "Default settings for Vega-Lite visualizations"
   {:config {:style {:cell {:stroke "transparent"}}
             :legend {:labelFont (:mono applied-science-font)
                      :labelFontSize 12

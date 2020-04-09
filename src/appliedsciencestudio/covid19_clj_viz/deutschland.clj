@@ -1,7 +1,7 @@
 (ns appliedsciencestudio.covid19-clj-viz.deutschland
   (:require [appliedsciencestudio.covid19-clj-viz.common :refer [applied-science-font
                                                                  applied-science-palette
-                                                                 oz-config]]
+                                                                 vega-lite-config]]
             [clojure.string :as string]
             [hickory.core :as hick]
             [hickory.select :as s]
@@ -178,7 +178,7 @@
 ;;;; ===========================================================================
 ;;;; Cases in Berlin over time
 (waqi/gaze!
- (merge-with merge oz-config
+ (merge-with merge vega-lite-config
              {:title {:text "Cases in selected German states over time"}
               :width 1200 :height 700
               :data {:values #_(cumulative-cases-in "Total infections")
@@ -203,7 +203,7 @@
 ;;;; ===========================================================================
 ;;;; Deaths in <PLACE> (e.g. Berlin) over time
 (waqi/gaze!
- (merge-with merge oz-config
+ (merge-with merge vega-lite-config
              {:title {:text "Deaths in Berlin over time (log scale)"}
               :width 750 :height 700
               :data {:values (->> (get cumulative-deaths "Berlin"
@@ -221,7 +221,7 @@
 ;;;; ===========================================================================
 ;;;; Deaths in Germany over time, log scale
 (waqi/gaze!
- (merge-with merge oz-config
+ (merge-with merge vega-lite-config
              {:title {:text "Deaths in Berlin over time, log-scale"}
               :width 1200 :height 700
               :data {:values (->> (get cumulative-infections "Total deaths")

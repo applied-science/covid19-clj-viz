@@ -2,17 +2,18 @@
   "Visualization of coronavirus situation in India.
 
   Contributed by Noor Afshan Fathima."
-  (:require [appliedsciencestudio.covid19-clj-viz.common :refer [oz-config
+  (:require [appliedsciencestudio.covid19-clj-viz.common :refer [vega-lite-config
                                                                  applied-science-palette]]
             [appliedsciencestudio.covid19-clj-viz.sources.johns-hopkins :as jh]
             [clojure.set :refer [rename-keys]]
             [clojure.string :as string]
             [jsonista.core :as json]
             [meta-csv.core :as mcsv]
-            [oz.core :as oz]))
+            [applied-science.waqi :as waqi]))
 
 (comment
-  (oz/start-server! 8082)
+  ;; Set up Vega-Lite visualization (via Waqi) on a particular port, if necessary
+  (waqi/start-server! 8082)
 
   )
 
@@ -42,7 +43,7 @@
 
 ;;;; ===========================================================================
 ;; Minimum viable geographic visualization of India
-(oz/view! {:data {:url "/public/data/india-all-states.geo.json"
+(waqi/gaze! {:data {:url "/public/data/india-all-states.geo.json"
                   :format {:type "json" :property "features"}}
            :mark "geoshape"})
 
@@ -80,8 +81,8 @@
 ;;;; ===========================================================================
 ;;;; Choropleth of Coronavirus situation in India
 ;;;; (It may take a while to load; I think because the geoJSON is very detailed)
-(oz/view!
-  (merge-with merge oz-config india-dimensions
+(waqi/gaze!
+  (merge-with merge vega-lite-config india-dimensions
               {:title {:text "Current India COVID-19 Scenario"}
                :data {:name "india"
                       :values india-geojson-with-data
@@ -102,8 +103,8 @@
 
 ;;;; ===========================================================================
 ;;;; Bar chart with Indian states
-(oz/view!
- (merge-with merge oz-config
+(waqi/gaze!
+ (merge-with merge vega-lite-config
              {:title {:text "Confirmed COVID19 cases in India"}
               :data {:values (->> state-data
                                   vals
@@ -117,8 +118,8 @@
 
 ;;;; ===========================================================================
 ;;;; Bar chart with Indian states and Chinese provinces
-(oz/view!
-  (merge oz-config
+(waqi/gaze!
+  (merge vega-lite-config
          {:title "Confirmed COVID19 cases in China and India",
           :data {:values (let [date "2020-03-19"]
                            (->> jh/confirmed

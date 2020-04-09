@@ -5,30 +5,22 @@
   editor-connected REPL"
   (:require [appliedsciencestudio.covid19-clj-viz.common :refer [applied-science-font
                                                                  applied-science-palette
-                                                                 oz-config]]
+                                                                 vega-lite-config]]
             [appliedsciencestudio.covid19-clj-viz.sources.johns-hopkins :as jh]
             [appliedsciencestudio.covid19-clj-viz.sources.world-bank :as world-bank]
             [clojure.string :as string]
             [clojure.set]
             [jsonista.core :as json]
-            [oz.core :as oz]
+            [applied-science.waqi :as waqi]
             [clojure.set :as set :refer [rename-keys]]
             [appliedsciencestudio.covid19-clj-viz.india :as india]))
-
-(comment
-  (oz/start-server! 8082)
-
-  )
-
-
-
 
 ;;;; ===========================================================================
 ;;;; A bar chart to compare particular countries
 
 ;; Sorted and with some rearranging around `province/country`.
-(oz/view!
- (merge-with merge oz-config
+(waqi/gaze!
+ (merge-with merge vega-lite-config
              {:title {:text "COVID19 cases in selected countries"}
               :width 800, :height 400
               :data {:values (->> jh/confirmed
@@ -88,8 +80,8 @@
 ;; See https://twitter.com/daveliepmann/status/1237740992905838593
 ;; XXX please note the date range in `compare-cases-in`
 ;; mimicking https://twitter.com/webdevMason/status/1237610911193387008/photo/1
-(oz/view!
- (merge-with merge oz-config
+(waqi/gaze!
+ (merge-with merge vega-lite-config
              {:title {:text "COVID-19, Italy & South Korea: daily new cases"
                       :font (:mono applied-science-font)
                       :fontSize 30
@@ -131,8 +123,8 @@
 
 ;;;; ===========================================================================
 ;;;; Daily new cases in a particular country over the past N days
-(oz/view!
- (merge-with merge oz-config
+(waqi/gaze!
+ (merge-with merge vega-lite-config
              {:title {:text "Daily new confirmed COVID-19 cases"
                       :font (:mono applied-science-font)
                       :fontSize 30
@@ -219,8 +211,8 @@
 
 
 ;; The rate of infection is relatively constant across countries.
-(oz/view!
- (merge-with merge oz-config europe-dimensions
+(waqi/gaze!
+ (merge-with merge vega-lite-config europe-dimensions
              {:title {:text "COVID19 in Europe: Rate of Infection Increase"}
               :data {:values europe-infection-datapoints
                      :format {:type "json" :property "features"}}
@@ -242,8 +234,8 @@
 ;;;; Total Cases of Coronavirus Outside of China
 ;; from Chart 9 https://medium.com/@tomaspueyo/coronavirus-act-today-or-people-will-die-f4d3d9cd99ca
 
-(oz/view!
- (merge-with merge oz-config
+(waqi/gaze!
+ (merge-with merge vega-lite-config
              {:title {:text "Total Cases of Coronavirus Outside of China"
                       :subtitle "(Countries with >50 cases as of 11.3.2020)"}
               :width 1200 :height 700

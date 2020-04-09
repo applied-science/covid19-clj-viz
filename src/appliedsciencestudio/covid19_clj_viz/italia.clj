@@ -4,10 +4,10 @@
   Contributed by David Schmudde.
 
   Relies on https://github.com/pcm-dpc/COVID-19 to be cloned into the `resources` directory."
-  (:require [appliedsciencestudio.covid19-clj-viz.common :refer [oz-config]]
+  (:require [appliedsciencestudio.covid19-clj-viz.common :refer [vega-lite-config]]
             [jsonista.core :as json]
             [meta-csv.core :as mcsv]
-            [oz.core :as oz]))
+            [applied-science.waqi :as waqi]))
 
 ;;;;;;;;;;;;;;;;;;;;
 ;; Conform Functions
@@ -162,8 +162,8 @@
   {:width 550 :height 700})
 
 ;; Regionally, we can see the north is affected strongly
-(oz/view!
- (merge-with merge oz-config italy-dimensions
+(waqi/gaze!
+ (merge-with merge vega-lite-config italy-dimensions
              {:title {:text "COVID19 cases in Italy, by province, per 100k inhabitants"}
               :data {:name "italy"
                      :values italia-region-geojson-with-data
@@ -177,8 +177,8 @@
               :selection {:highlight {:on "mouseover" :type "single"}}}))
 
 ;; Looking province-by-province, we can see how geographically concentrated the crisis is:
-(oz/view!
- (merge-with merge oz-config italy-dimensions
+(waqi/gaze!
+ (merge-with merge vega-lite-config italy-dimensions
              {:title {:text "COVID19 cases in Italy, by province, per 100k inhabitants"}
               :data {:name "italy"
                      :values (update (json/read-value (java.io.File. "resources/public/public/data/limits_IT_provinces-original.geo.json")

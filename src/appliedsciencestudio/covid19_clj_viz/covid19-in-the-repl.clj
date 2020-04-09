@@ -15,20 +15,23 @@
             [clojure.set :refer [rename-keys]]
             [clojure.string :as string]
             [jsonista.core :as json]
-            [oz.core :as oz]))
+            [applied-science.waqi :as waqi]))
 
 ;; Our visualizations are powered by Vega(-lite), which we connect to
-;; through an Oz server. Oz will open a browser window to display the
+;; through Waqi, which will open a browser window to display the
 ;; visualizations.
 (comment
-  (oz/start-server! 8082)
+  ;; It is only necessary to evaluate the following line if you want
+  ;; to run the Waqi webserver on a port other than 8080. Otherwise,
+  ;; the first call to `gaze!` will start the server automatically.
+  #_ (waqi/start-server! 8082)
 
   )
 
 
 ;;;; ===========================================================================
 ;;;; Minimum viable geographic visualization
-(oz/view! {:data {:url "/public/data/deutschland-bundeslaender.geo.json"
+(waqi/gaze! {:data {:url "/public/data/deutschland-bundeslaender.geo.json"
                   ;; We depend on Vega-lite's auto-parsing of GeoJSON:
                   :format {:type "json" :property "features"}}
            :mark "geoshape"})
@@ -46,8 +49,8 @@
   {:mono "IBM Plex Mono"
    :sans "IBM Plex Sans"})
 
-(def oz-config
-  "Default settings for Oz visualizations"
+(def vega-lite-config
+  "Default settings for Vega-Lite visualizations"
   {:config {:style {:cell {:stroke "transparent"}}
             :legend {:labelFont (:mono applied-science-font)
                      :labelFontSize 12
@@ -119,11 +122,11 @@
 
 ;;;; ===========================================================================
 ;;;; Geographic visualization of cases in each Germany state, shaded proportional to population
-(oz/view!
- (merge-with merge oz-config germany-dimensions
+(waqi/gaze!
+ (merge-with merge vega-lite-config germany-dimensions
              {:title {:text "COVID19 cases in Germany, by state, per 100k inhabitants"}
               :data {:name "germany"
-                     ;; FIXME this keeps getting cached somewhere in Firefox or Oz
+                     ;; FIXME this keeps getting cached somewhere in Firefox
                      ;; :url "/public/data/deutschland-bundeslaender.geo.json",
                      :values deutschland-geojson-with-data
                      :format {:property "features"}},
@@ -142,11 +145,11 @@
 ;;;; Deceptive version of that same map
 ;;    - red has emotional valence ["#fde5d9" "#a41e23"]
 ;;    - we report cases without taking population into account
-(oz/view!
- (merge-with merge oz-config germany-dimensions
+(waqi/gaze!
+ (merge-with merge vega-lite-config germany-dimensions
              {:title {:text "COVID19 cases in Germany (*not* population-scaled)"}
               :data {:name "germany"
-                     ;; FIXME this keeps getting cached somewhere in Firefox or Oz
+                     ;; FIXME this keeps getting cached somewhere in Firefox
                      ;; :url "/public/data/deutschland-bundeslaender.geo.json",
                      :values deutschland-geojson-with-data
                      :format {:property "features"}},
@@ -171,9 +174,9 @@
 ;; NB: the situation and therefore the data have changed dramatically
 ;; since the article was published, so this chart is _very_
 ;; different!
-(oz/view!
+(waqi/gaze!
  (merge-with
-  merge oz-config
+  merge vega-lite-config
   {:title {:text "Confirmed COVID19 cases in China and Germany (on specific date)"}
    :width 650 :height 750
    ;; Here is the snippet of code the article examines in detail:
@@ -212,8 +215,8 @@
 (def china-dimensions
   {:width 570 :height 450})
 
-(oz/view!
- (merge-with merge oz-config china-dimensions
+(waqi/gaze!
+ (merge-with merge vega-lite-config china-dimensions
              {:data {:name "map"
                      :url "/public/data/china-provinces.geo.json"
                      :format {:property "features"}},
@@ -232,8 +235,8 @@
 ;;  - uses red, which has inappropriate emotional valence
 ;; This is more visually appealing and _feels_ useful, but is actually quite deceptive.
 ;; (inspired by https://www.esri.com/arcgis-blog/products/product/mapping/mapping-coronavirus-responsibly/ )
-(oz/view!
- (merge-with merge oz-config china-dimensions
+(waqi/gaze!
+ (merge-with merge vega-lite-config china-dimensions
              {:title {:text "COVID19 cases in China"}
               :data {:name "map"
                      :url "/public/data/china-provinces.geo.json",
@@ -261,8 +264,8 @@
 ;; This requires the viewer to understand orders of magnitude, which
 ;; might be appropriate for data science but inappropriate for
 ;; journalism.
-(oz/view!
- (merge-with merge oz-config china-dimensions
+(waqi/gaze!
+ (merge-with merge vega-lite-config china-dimensions
              {:title {:text "COVID19 cases in China per 100k inhabitants, log-scaled"}
               :data {:name "map"
                      :url "/public/data/china-provinces.geo.json",

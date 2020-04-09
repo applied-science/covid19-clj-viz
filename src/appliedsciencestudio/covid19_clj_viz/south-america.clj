@@ -4,12 +4,12 @@
   Contributed by Yuliana Apaza and Paula Asto."
   (:require [appliedsciencestudio.covid19-clj-viz.sources.johns-hopkins :as jh]
             [appliedsciencestudio.covid19-clj-viz.sources.world-bank :as wb]
-            [appliedsciencestudio.covid19-clj-viz.common :refer [oz-config
+            [appliedsciencestudio.covid19-clj-viz.common :refer [vega-lite-config
                                                                  applied-science-palette]]
             [meta-csv.core :as mcsv]
             [clojure.set :refer [rename-keys]]
             [jsonista.core :as json]
-            [oz.core :as oz]))
+            [applied-science.waqi :as waqi]))
 
 (def southamerica-cases
   "Current number of COVID19 cases in South America, by countries"
@@ -125,19 +125,14 @@
                                0))))
                   features))))
 
-(comment
-  (oz/start-server! 8082)
-
-  )
-
 (def map-dimensions
   {:width 550 :height 700})
 
 
 ;;;; ===========================================================================
 ;;;; COVID-19 cases in South America, by country, scaled to population
-(oz/view!
- (merge-with merge oz-config map-dimensions
+(waqi/gaze!
+ (merge-with merge vega-lite-config map-dimensions
              {:title {:text "COVID-19 cases in South America by country"}
               :data {:name "south-america"
                      :values south-america-geojson-with-data
@@ -154,8 +149,8 @@
 
 ;;;; ===========================================================================
 ;;;; COVID-19 cases in Peru, by region, scaled to population
-(oz/view!
- (merge-with merge oz-config map-dimensions
+(waqi/gaze!
+ (merge-with merge vega-lite-config map-dimensions
              {:title {:text "COVID-19 cases in Peru by Regions"}
               :data {:name "peru"
                      :values peru-geojson-with-data
