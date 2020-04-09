@@ -51,7 +51,7 @@
   {:width 750 :height 750})
 
 (def india-geojson-with-data
-  (update (json/read-value (java.io.File. "resources/public/public/data/india-all-states.geo.json")
+  (update (json/read-value (java.io.File. "resources/public/data/india-all-states.geo.json")
                            (json/object-mapper {:decode-key-fn true}))
           :features
           (fn [features]
@@ -69,7 +69,7 @@
                   features))))
 
 (comment
-  (json/write-value (java.io.File. "resources/public/public/data/india-all-states-created.geo.json")
+  (json/write-value (java.io.File. "resources/public/data/india-all-states-created.geo.json")
                     india-geojson-with-data)
 
   ;; for inspection without flooding my REPL, we ignore the many many coordinates:

@@ -72,7 +72,7 @@
 ;; poorly-documented Vega-lite config.
 (def deutschland-geojson-with-data
   "GeoJSON of Germany, plus data points we gather from other sources."
-  (update (json/read-value (java.io.File. "resources/public/public/data/deutschland-bundeslaender-original.geo.json")
+  (update (json/read-value (java.io.File. "resources/public/data/deutschland-bundeslaender-original.geo.json")
                            (json/object-mapper {:decode-key-fn true}))
           :features
           (fn [features]
@@ -90,11 +90,11 @@
 
   ;; Germany
   ;; medium quality GeoJSON from https://github.com/isellsoap/deutschlandGeoJSON/blob/master/2_bundeslaender/3_mittel.geojson
-  (json/write-value (java.io.File. "resources/public/public/data/deutschland-bundeslaender.geo.json")
+  (json/write-value (java.io.File. "resources/public/data/deutschland-bundeslaender.geo.json")
                     deutschland-geojson-with-data)
 
   ;; China
-  (->> (update (json/read-value (java.io.File. "resources/public/public/data/china-provinces-original.geo.json")
+  (->> (update (json/read-value (java.io.File. "resources/public/data/china-provinces-original.geo.json")
                                 (json/object-mapper {:decode-key-fn true}))
                :features
                (fn [features]
@@ -115,7 +115,7 @@
                                                  :else          0)
                                  :cases-per-100k cases-per-100k)))
                       features)))
-       (json/write-value (java.io.File. "resources/public/public/data/china-provinces.geo.json")))
+       (json/write-value (java.io.File. "resources/public/data/china-provinces.geo.json")))
 
   )
 

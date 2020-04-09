@@ -156,7 +156,7 @@
   {:width 750 :height 750})
 
 (def europe-geojson
-  (json/read-value (java.io.File. "resources/public/public/data/europe.geo.json")
+  (json/read-value (java.io.File. "resources/public/data/europe.geo.json")
                    (json/object-mapper {:decode-key-fn true})))
 
 (comment

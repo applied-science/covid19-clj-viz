@@ -130,14 +130,14 @@
 ;;;;;;;;;;;;;
 ;; Final Data
 
-(def region-data "For use with resources/public/public/data/limits_IT_regions-original.geo.json"
+(def region-data "For use with resources/public/data/limits_IT_regions-original.geo.json"
   (-> (add-population-to-territories region-covid-data region-population-data :region-name)
       (compute-cases-per-100k)
       (conform-to-territory-name :region-name)
       (dissoc "P.A. Bolzano" "P.A. Trento")))
 
 (def province-data
-  "For use with resources/public/public/data/limits_IT_provinces-original.geo.json"
+  "For use with resources/public/data/limits_IT_provinces-original.geo.json"
   (-> (remove (comp #{"In fase di definizione/aggiornamento"} :province-name) province-covid-data)
       (add-population-to-territories province-population-data :province-name)
       (compute-cases-per-100k)
@@ -147,7 +147,7 @@
 ;;;; Coronavirus cases in Italy, by region and province
 
 (def italia-region-geojson-with-data
-  (update (json/read-value (java.io.File. "resources/public/public/data/limits_IT_regions-original.geo.json")
+  (update (json/read-value (java.io.File. "resources/public/data/limits_IT_regions-original.geo.json")
                            (json/object-mapper {:decode-key-fn true}))
           :features
           (fn [features]
@@ -181,7 +181,7 @@
  (merge-with merge vega-lite-config italy-dimensions
              {:title {:text "COVID19 cases in Italy, by province, per 100k inhabitants"}
               :data {:name "italy"
-                     :values (update (json/read-value (java.io.File. "resources/public/public/data/limits_IT_provinces-original.geo.json")
+                     :values (update (json/read-value (java.io.File. "resources/public/data/limits_IT_provinces-original.geo.json")
                                                       (json/object-mapper {:decode-key-fn true}))
                                      :features
                                      (fn [features]

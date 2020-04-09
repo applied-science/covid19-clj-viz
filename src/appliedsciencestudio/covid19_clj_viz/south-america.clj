@@ -74,7 +74,7 @@
                                    :capital]})))
 
 (def south-america-geojson-with-data
-  (update (json/read-value (java.io.File. "resources/public/public/data/southamerica.geo.json")
+  (update (json/read-value (java.io.File. "resources/public/data/southamerica.geo.json")
                            (json/object-mapper {:decode-key-fn true}))
           :features
           (fn [features]
@@ -91,7 +91,7 @@
                   features))))
 
 (def peru-geojson-with-data
-  (update (json/read-value (java.io.File. "resources/public/public/data/peru-regions.geo.json")
+  (update (json/read-value (java.io.File. "resources/public/data/peru-regions.geo.json")
                            (json/object-mapper {:decode-key-fn true}))
           :features
           (fn [features]
