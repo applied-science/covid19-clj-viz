@@ -135,11 +135,11 @@
             {} rows)))
 
 (defn parenthetical-num-or-0 [s]
-    (let [i1 (.indexOf s "(")
-          i2 (.indexOf s ")")]
-      (if (and (string? s) (pos? i1) (pos? i2))
-        (Integer/parseInt (subs s (inc i1) i2))
-        0)))
+  (let [i1 (.indexOf s "(")
+        i2 (.indexOf s ")")]
+    (if (and (string? s) (pos? i1) (pos? i2))
+      (Integer/parseInt (subs s (inc i1) i2))
+      0)))
 
 (def cumulative-deaths
   "Mapping from German states to number of coronavirus deaths, by date."
@@ -154,10 +154,10 @@
         clean-hdr (conj (map wiki-date->utc (rest hdr))
                         :label)]
     (dissoc (reduce (fn [acc m]
-               (assoc acc (normalize-bundesland (:label m))
-                      (dissoc m :label)))
-             {}
-             (map zipmap (repeat clean-hdr) rows))
+                      (assoc acc (normalize-bundesland (:label m))
+                             (dissoc m :label)))
+                    {}
+                    (map zipmap (repeat clean-hdr) rows))
             "New cases" "Total infections" "Total deaths" "New deaths")))
 
 (comment
@@ -204,13 +204,13 @@
 ;;;; Deaths in <PLACE> (e.g. Berlin) over time
 (oz/view!
  (merge-with merge oz-config
-             {:title {:text "Deaths in Berlin over time"}
-              :width 1200 :height 700
+             {:title {:text "Deaths in Berlin over time (log scale)"}
+              :width 750 :height 700
               :data {:values (->> (get cumulative-deaths "Berlin"
                                        #_ "Bayern"
                                        #_"Nordrhein-Westfalen")
                                   (remove (comp zero? val))
-                                  (map #(assoc {} :date (key %) :cases (val %))))}
+                                  (map #(assoc {} :date (key %) :cases (Math/log10 (val %)))))}
               :mark {:type "line" :strokeWidth 4 :point "transparent"
                      :color (:green applied-science-palette)}
               :encoding {:x {:field "date" :type "temporal" :timeUnit "date"}
@@ -226,7 +226,7 @@
               :width 1200 :height 700
               :data {:values (->> (get cumulative-infections "Total deaths")
                                   (remove (comp zero? val))
-                                  (map #(assoc {} :date (key %) :deaths (Math/log (val %)))))}
+                                  (map #(assoc {} :date (key %) :deaths (Math/log10 (val %)))))}
               :mark {:type "line" :strokeWidth 4 :point "transparent"
                      :color (:pink applied-science-palette)}
               :encoding {:x {:field "date" :type "temporal" :timeUnit "date"}
