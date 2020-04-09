@@ -6,7 +6,7 @@
             [hickory.core :as hick]
             [hickory.select :as s]
             [meta-csv.core :as mcsv]
-            [applied-science.waqi :as waqi]))
+            [appliedsciencestudio.waqi :as waqi]))
 
 (defn normalize-bundesland
   "Standardizes English/German & typographic variation in German state names to standard German spelling.

@@ -7,7 +7,7 @@
   (:require [appliedsciencestudio.covid19-clj-viz.common :refer [vega-lite-config]]
             [jsonista.core :as json]
             [meta-csv.core :as mcsv]
-            [applied-science.waqi :as waqi]))
+            [appliedsciencestudio.waqi :as waqi]))
 
 ;;;;;;;;;;;;;;;;;;;;
 ;; Conform Functions
