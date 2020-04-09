@@ -204,13 +204,13 @@
 ;;;; Deaths in <PLACE> (e.g. Berlin) over time
 (oz/view!
  (merge-with merge oz-config
-             {:title {:text "Deaths in Berlin over time"}
-              :width 1200 :height 700
+             {:title {:text "Deaths in Berlin over time (log scale)"}
+              :width 750 :height 700
               :data {:values (->> (get cumulative-deaths "Berlin"
                                        #_ "Bayern"
                                        #_"Nordrhein-Westfalen")
                                   (remove (comp zero? val))
-                                  (map #(assoc {} :date (key %) :cases (val %))))}
+                                  (map #(assoc {} :date (key %) :cases (Math/log10 (val %)))))}
               :mark {:type "line" :strokeWidth 4 :point "transparent"
                      :color (:green applied-science-palette)}
               :encoding {:x {:field "date" :type "temporal" :timeUnit "date"}
