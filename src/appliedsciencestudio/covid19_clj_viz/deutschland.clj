@@ -6,7 +6,7 @@
             [hickory.core :as hick]
             [hickory.select :as s]
             [meta-csv.core :as mcsv]
-            [oz.core :as oz]))
+            [applied-science.waqi :as waqi]))
 
 (defn normalize-bundesland
   "Standardizes English/German & typographic variation in German state names to standard German spelling.
@@ -177,7 +177,7 @@
 
 ;;;; ===========================================================================
 ;;;; Cases in Berlin over time
-(oz/view!
+(waqi/gaze!
  (merge-with merge oz-config
              {:title {:text "Cases in selected German states over time"}
               :width 1200 :height 700
@@ -202,7 +202,7 @@
 
 ;;;; ===========================================================================
 ;;;; Deaths in <PLACE> (e.g. Berlin) over time
-(oz/view!
+(waqi/gaze!
  (merge-with merge oz-config
              {:title {:text "Deaths in Berlin over time (log scale)"}
               :width 750 :height 700
@@ -220,7 +220,7 @@
 
 ;;;; ===========================================================================
 ;;;; Deaths in Germany over time, log scale
-(oz/view!
+(waqi/gaze!
  (merge-with merge oz-config
              {:title {:text "Deaths in Berlin over time, log-scale"}
               :width 1200 :height 700
