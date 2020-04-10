@@ -9,7 +9,7 @@
             [clojure.string :as string]
             [jsonista.core :as json]
             [meta-csv.core :as mcsv]
-            [appliedsciencestudio.waqi :as waqi]))
+            [applied-science.waqi :as waqi]))
 
 (comment
   ;; Set up Vega-Lite visualization (via Waqi) on a particular port, if necessary

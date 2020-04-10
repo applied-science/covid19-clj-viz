@@ -11,7 +11,7 @@
             [clojure.string :as string]
             [clojure.set]
             [jsonista.core :as json]
-            [appliedsciencestudio.waqi :as waqi]
+            [applied-science.waqi :as waqi]
             [clojure.set :as set :refer [rename-keys]]
             [appliedsciencestudio.covid19-clj-viz.india :as india]))
 

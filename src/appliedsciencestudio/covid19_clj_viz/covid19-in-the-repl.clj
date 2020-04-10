@@ -15,7 +15,7 @@
             [clojure.set :refer [rename-keys]]
             [clojure.string :as string]
             [jsonista.core :as json]
-            [appliedsciencestudio.waqi :as waqi]))
+            [applied-science.waqi :as waqi]))
 
 ;; Our visualizations are powered by Vega(-lite), which we connect to
 ;; through Waqi, which will open a browser window to display the

@@ -9,7 +9,7 @@
             [meta-csv.core :as mcsv]
             [clojure.set :refer [rename-keys]]
             [jsonista.core :as json]
-            [appliedsciencestudio.waqi :as waqi]))
+            [applied-science.waqi :as waqi]))
 
 (def southamerica-cases
   "Current number of COVID19 cases in South America, by countries"
