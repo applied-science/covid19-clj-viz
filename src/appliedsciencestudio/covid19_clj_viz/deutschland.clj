@@ -177,61 +177,68 @@
 
 ;;;; ===========================================================================
 ;;;; Cases in Berlin over time
-(waqi/gaze!
- (merge-with merge vega-lite-config
-             {:title {:text "Cases in selected German states over time"}
-              :width 1200 :height 700
-              :data {:values #_(cumulative-cases-in "Total infections")
-                     (concat (cumulative-cases-in "Bayern")
-                             (cumulative-cases-in "Nordrhein-Westfalen")
-                             (cumulative-cases-in "Berlin"))}
-              :mark {:type "line" :strokeWidth 4 :point "transparent"
-                     :color (:purple applied-science-palette)}
-              :encoding {:x {:field "date" :type "temporal"}
-                         :y {:field "cases", :type "quantitative"}
-                         :tooltip {:field "cases", :type "quantitative"}
-                         :color {:field "place" :type "ordinal"
-                                 :scale {:range [(:green applied-science-palette)
-                                                 (:purple applied-science-palette)
-                                                 (:blue applied-science-palette)]}}}}))
-
-;; TODO cases in Germany
-;; TODO deaths in Berlin
-;; TODO mark special dates, e.g. quarantine
+(comment ;; These visualizations are in a `comment` so that folks
+         ;; working through `covid19-in-the-repl` don't see unrelated
+         ;; visualizations first. Otherwise the standard in this repo
+         ;; is to put `gaze!` calls at the top level.
+  
+  (waqi/gaze!
+   (merge-with merge vega-lite-config
+               {:title {:text "Cases in selected German states over time"}
+                :width 1200 :height 700
+                :data {:values #_(cumulative-cases-in "Total infections")
+                       (concat (cumulative-cases-in "Bayern")
+                               (cumulative-cases-in "Nordrhein-Westfalen")
+                               (cumulative-cases-in "Berlin"))}
+                :mark {:type "line" :strokeWidth 4 :point "transparent"
+                       :color (:purple applied-science-palette)}
+                :encoding {:x {:field "date" :type "temporal"}
+                           :y {:field "cases", :type "quantitative"}
+                           :tooltip {:field "cases", :type "quantitative"}
+                           :color {:field "place" :type "ordinal"
+                                   :scale {:range [(:green applied-science-palette)
+                                                   (:purple applied-science-palette)
+                                                   (:blue applied-science-palette)]}}}}))
+  
+  ;; TODO cases in Germany
+  ;; TODO deaths in Berlin
+  ;; TODO mark special dates, e.g. quarantine
 
 
 ;;;; ===========================================================================
 ;;;; Deaths in <PLACE> (e.g. Berlin) over time
-(waqi/gaze!
- (merge-with merge vega-lite-config
-             {:title {:text "Deaths in Berlin over time (log scale)"}
-              :width 750 :height 700
-              :data {:values (->> (get cumulative-deaths "Berlin"
-                                       #_ "Bayern"
-                                       #_"Nordrhein-Westfalen")
-                                  (remove (comp zero? val))
-                                  (map #(assoc {} :date (key %) :cases (Math/log10 (val %)))))}
-              :mark {:type "line" :strokeWidth 4 :point "transparent"
-                     :color (:green applied-science-palette)}
-              :encoding {:x {:field "date" :type "temporal" :timeUnit "date"}
-                         :y {:field "cases", :type "quantitative"}
-                         :tooltip {:field "cases", :type "quantitative"}}}))
+  (waqi/gaze!
+   (merge-with merge vega-lite-config
+               {:title {:text "Deaths in Berlin over time (log scale)"}
+                :width 750 :height 700
+                :data {:values (->> (get cumulative-deaths "Berlin"
+                                         #_ "Bayern"
+                                         #_"Nordrhein-Westfalen")
+                                    (remove (comp zero? val))
+                                    (map #(assoc {} :date (key %) :cases (Math/log10 (val %)))))}
+                :mark {:type "line" :strokeWidth 4 :point "transparent"
+                       :color (:green applied-science-palette)}
+                :encoding {:x {:field "date" :type "temporal" :timeUnit "date"}
+                           :y {:field "cases", :type "quantitative"}
+                           :tooltip {:field "cases", :type "quantitative"}}}))
 
 
 ;;;; ===========================================================================
 ;;;; Deaths in Germany over time, log scale
-(waqi/gaze!
- (merge-with merge vega-lite-config
-             {:title {:text "Deaths in Berlin over time, log-scale"}
-              :width 1200 :height 700
-              :data {:values (->> (get cumulative-infections "Total deaths")
-                                  (remove (comp zero? val))
-                                  (map #(assoc {} :date (key %) :deaths (Math/log10 (val %)))))}
-              :mark {:type "line" :strokeWidth 4 :point "transparent"
-                     :color (:pink applied-science-palette)}
-              :encoding {:x {:field "date" :type "temporal" :timeUnit "date"}
-                         :y {:field "deaths", :type "quantitative"}
-                         :tooltip {:field "deaths", :type "quantitative"}}}))
+  (waqi/gaze!
+   (merge-with merge vega-lite-config
+               {:title {:text "Deaths in Berlin over time, log-scale"}
+                :width 1200 :height 700
+                :data {:values (->> (get cumulative-infections "Total deaths")
+                                    (remove (comp zero? val))
+                                    (map #(assoc {} :date (key %) :deaths (Math/log10 (val %)))))}
+                :mark {:type "line" :strokeWidth 4 :point "transparent"
+                       :color (:pink applied-science-palette)}
+                :encoding {:x {:field "date" :type "temporal" :timeUnit "date"}
+                           :y {:field "deaths", :type "quantitative"}
+                           :tooltip {:field "deaths", :type "quantitative"}}}))
+
+  )
 
 
 ;;;; Scraping case data for areas of Germany
