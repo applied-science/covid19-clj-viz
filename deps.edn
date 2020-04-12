@@ -9,4 +9,4 @@
         ;; got a FileNotFoundException with ring.util.response. Moving
         ;; waqi out of first position irrevocably fixed this. :shrug:
         applied-science/waqi {:git/url "https://github.com/applied-science/waqi"
-                              :sha "3cbdb87aced006e7f1f8606a52e0c9175a3626fe"}}}
+                              :sha "0d627035efdd019805101e4f4c0a083867cf5c7b"}}}
