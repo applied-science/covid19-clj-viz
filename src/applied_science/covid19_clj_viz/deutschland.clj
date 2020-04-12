@@ -1,7 +1,7 @@
 (ns applied-science.covid19-clj-viz.deutschland
   (:require [applied-science.covid19-clj-viz.common :refer [applied-science-font
-                                                                 applied-science-palette
-                                                                 oz-config]]
+                                                            applied-science-palette
+                                                            oz-config]]
             [clojure.string :as string]
             [hickory.core :as hick]
             [hickory.select :as s]
