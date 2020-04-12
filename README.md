@@ -18,7 +18,7 @@ starting there:
 1. Clone the [Johns Hopkins dataset
    repo](https://github.com/CSSEGISandData/COVID-19) to *resources/*
    within this repo
-1. Open `appliedsciencestudio.covid19-clj-viz.covid19_in_the_repl`
+1. Open `applied_science.covid19-clj-viz.covid19_in_the_repl`
 1. Start a Clojure REPL (based on deps.edn, not Leiningen)
 1. Evaluate forms one at a time, with a browser window open next to
    your editor so you can see the visualizatons as you go

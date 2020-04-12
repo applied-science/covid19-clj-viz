@@ -1,5 +1,5 @@
-(ns appliedsciencestudio.covid19-clj-viz.deutschland
-  (:require [appliedsciencestudio.covid19-clj-viz.common :refer [applied-science-font
+(ns applied-science.covid19-clj-viz.deutschland
+  (:require [applied-science.covid19-clj-viz.common :refer [applied-science-font
                                                                  applied-science-palette
                                                                  oz-config]]
             [clojure.string :as string]

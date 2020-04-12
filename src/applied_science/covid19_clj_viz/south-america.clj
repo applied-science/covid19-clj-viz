@@ -1,14 +1,14 @@
-(ns appliedsciencestudio.covid19-clj-viz.south-america
+(ns applied-science.covid19-clj-viz.south-america
   "Visualization of coronavirus situation in South America.
   
   Contributed by Yuliana Apaza and Paula Asto."
-  (:require [appliedsciencestudio.covid19-clj-viz.sources.johns-hopkins :as jh]
-            [appliedsciencestudio.covid19-clj-viz.sources.world-bank :as wb]
-            [appliedsciencestudio.covid19-clj-viz.common :refer [oz-config
-                                                                 applied-science-palette]]
-            [meta-csv.core :as mcsv]
+  (:require [applied-science.covid19-clj-viz.sources.johns-hopkins :as jh]
+            [applied-science.covid19-clj-viz.sources.world-bank :as wb]
+            [applied-science.covid19-clj-viz.common :refer [oz-config
+                                                            applied-science-palette]]
             [clojure.set :refer [rename-keys]]
             [jsonista.core :as json]
+            [meta-csv.core :as mcsv]
             [oz.core :as oz]))
 
 (def southamerica-cases

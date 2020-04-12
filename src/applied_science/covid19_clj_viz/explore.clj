@@ -1,19 +1,17 @@
-(ns appliedsciencestudio.covid19-clj-viz.explore
+(ns applied-science.covid19-clj-viz.explore
   "REPL notebook for exploration through data visualization.
 
   Intended to be executed one form at a time, interactively in your
   editor-connected REPL"
-  (:require [appliedsciencestudio.covid19-clj-viz.common :refer [applied-science-font
-                                                                 applied-science-palette
-                                                                 oz-config]]
-            [appliedsciencestudio.covid19-clj-viz.sources.johns-hopkins :as jh]
-            [appliedsciencestudio.covid19-clj-viz.sources.world-bank :as world-bank]
+  (:require [applied-science.covid19-clj-viz.common :refer [applied-science-font
+                                                            applied-science-palette
+                                                            oz-config]]
+            [applied-science.covid19-clj-viz.sources.johns-hopkins :as jh]
+            [applied-science.covid19-clj-viz.sources.world-bank :as world-bank]
             [clojure.string :as string]
             [clojure.set]
             [jsonista.core :as json]
-            [oz.core :as oz]
-            [clojure.set :as set :refer [rename-keys]]
-            [appliedsciencestudio.covid19-clj-viz.india :as india]))
+            [oz.core :as oz]))
 
 (comment
   (oz/start-server! 8082)
@@ -145,8 +143,8 @@
                                     vals
                                     (into [])
                                     (map-indexed (fn [i n] {:cases n
-                                                           :country country
-                                                           :days-ago i}))))},
+                                                            :country country
+                                                            :days-ago i}))))},
               :mark {:type "bar" :size 24}
               :encoding {:x {:field "days-ago" :type "ordinal"
                              :sort "descending"}

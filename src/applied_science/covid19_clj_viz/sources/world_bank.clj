@@ -1,4 +1,4 @@
-(ns appliedsciencestudio.covid19-clj-viz.sources.world-bank
+(ns applied-science.covid19-clj-viz.sources.world-bank
   (:require [meta-csv.core :as mcsv]))
 
 (def normalize-country

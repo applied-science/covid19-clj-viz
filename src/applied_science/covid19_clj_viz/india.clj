@@ -1,10 +1,10 @@
-(ns appliedsciencestudio.covid19-clj-viz.india
+(ns applied-science.covid19-clj-viz.india
   "Visualization of coronavirus situation in India.
 
   Contributed by Noor Afshan Fathima."
-  (:require [appliedsciencestudio.covid19-clj-viz.common :refer [oz-config
+  (:require [applied-science.covid19-clj-viz.common :refer [oz-config
                                                                  applied-science-palette]]
-            [appliedsciencestudio.covid19-clj-viz.sources.johns-hopkins :as jh]
+            [applied-science.covid19-clj-viz.sources.johns-hopkins :as jh]
             [clojure.set :refer [rename-keys]]
             [clojure.string :as string]
             [jsonista.core :as json]

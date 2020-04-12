@@ -1,11 +1,11 @@
-(ns appliedsciencestudio.covid19-clj-viz.sources.johns-hopkins
+(ns applied-science.covid19-clj-viz.sources.johns-hopkins
   "Johns Hopkins COVID19 data sources, with util fns.
 
   Several vars rely on the Johns Hopkins repo to be cloned into the
   `resources` directory. See README."
-  (:require [appliedsciencestudio.covid19-clj-viz.sources.world-bank :as world-bank]
-            [meta-csv.core :as mcsv]
-            [clojure.string :as string])
+  (:require [applied-science.covid19-clj-viz.sources.world-bank :as world-bank]
+            [clojure.string :as string]
+            [meta-csv.core :as mcsv])
   (:import [java.time LocalDate]
            [java.time.format DateTimeFormatter]))
 
