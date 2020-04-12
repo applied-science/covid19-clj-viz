@@ -132,7 +132,7 @@
 (def map-dimensions
   {:width 550 :height 700})
 
-(waqi/gaze!
+(waqi/plot!
  (merge-with merge vega-lite-config map-dimensions
              {:title {:text "COVID-19 cases in South America by country"}
               :data {:name "south-america"
@@ -150,7 +150,7 @@
 
 ;;;; ===========================================================================
 ;;;; COVID-19 cases in Peru, by region, scaled to population
-(waqi/gaze!
+(waqi/plot!
  (merge-with merge vega-lite-config map-dimensions
              {:title {:text "COVID-19 cases in Peru by Regions"}
               :data {:name "peru"

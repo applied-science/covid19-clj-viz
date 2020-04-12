@@ -43,7 +43,7 @@
 
 ;;;; ===========================================================================
 ;; Minimum viable geographic visualization of India
-(waqi/gaze! {:data {:url "/public/data/india-all-states.geo.json"
+(waqi/plot! {:data {:url "/public/data/india-all-states.geo.json"
                   :format {:type "json" :property "features"}}
            :mark "geoshape"})
 
@@ -81,7 +81,7 @@
 ;;;; ===========================================================================
 ;;;; Choropleth of Coronavirus situation in India
 ;;;; (It may take a while to load; I think because the geoJSON is very detailed)
-(waqi/gaze!
+(waqi/plot!
   (merge-with merge vega-lite-config india-dimensions
               {:title {:text "Current India COVID-19 Scenario"}
                :data {:name "india"
@@ -103,7 +103,7 @@
 
 ;;;; ===========================================================================
 ;;;; Bar chart with Indian states
-(waqi/gaze!
+(waqi/plot!
  (merge-with merge vega-lite-config
              {:title {:text "Confirmed COVID19 cases in India"}
               :data {:values (->> state-data
@@ -118,7 +118,7 @@
 
 ;;;; ===========================================================================
 ;;;; Bar chart with Indian states and Chinese provinces
-(waqi/gaze!
+(waqi/plot!
   (merge vega-lite-config
          {:title "Confirmed COVID19 cases in China and India",
           :data {:values (let [date "2020-03-19"]

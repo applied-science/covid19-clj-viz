@@ -8,4 +8,5 @@
         ;; When waqi was first (before even Clojure) in this map, we
         ;; got a FileNotFoundException with ring.util.response. Moving
         ;; waqi out of first position irrevocably fixed this. :shrug:
-        applied-science/waqi {:local/root "/Users/daveliepmann/src/applied-science/waqi/"}}}
+        applied-science/waqi {:git/url "https://github.com/applied-science/waqi"
+                              :sha "3cbdb87aced006e7f1f8606a52e0c9175a3626fe"}}}

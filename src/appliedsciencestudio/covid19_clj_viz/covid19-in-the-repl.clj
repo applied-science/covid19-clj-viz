@@ -23,7 +23,7 @@
 (comment
   ;; It is only necessary to evaluate the following line if you want
   ;; to run the Waqi webserver on a port other than 8080. Otherwise,
-  ;; the first call to `gaze!` will start the server automatically.
+  ;; the first call to `plot!` will start the server automatically.
   #_ (waqi/start-server! 8082)
 
   )
@@ -31,7 +31,7 @@
 
 ;;;; ===========================================================================
 ;;;; Minimum viable geographic visualization
-(waqi/gaze! {:data {:url "/public/data/deutschland-bundeslaender.geo.json"
+(waqi/plot! {:data {:url "/public/data/deutschland-bundeslaender.geo.json"
                   ;; We depend on Vega-lite's auto-parsing of GeoJSON:
                   :format {:type "json" :property "features"}}
            :mark "geoshape"})
@@ -122,7 +122,7 @@
 
 ;;;; ===========================================================================
 ;;;; Geographic visualization of cases in each Germany state, shaded proportional to population
-(waqi/gaze!
+(waqi/plot!
  (merge-with merge vega-lite-config germany-dimensions
              {:title {:text "COVID19 cases in Germany, by state, per 100k inhabitants"}
               :data {:name "germany"
@@ -145,7 +145,7 @@
 ;;;; Deceptive version of that same map
 ;;    - red has emotional valence ["#fde5d9" "#a41e23"]
 ;;    - we report cases without taking population into account
-(waqi/gaze!
+(waqi/plot!
  (merge-with merge vega-lite-config germany-dimensions
              {:title {:text "COVID19 cases in Germany (*not* population-scaled)"}
               :data {:name "germany"
@@ -174,7 +174,7 @@
 ;; NB: the situation and therefore the data have changed dramatically
 ;; since the article was published, so this chart is _very_
 ;; different!
-(waqi/gaze!
+(waqi/plot!
  (merge-with
   merge vega-lite-config
   {:title {:text "Confirmed COVID19 cases in China and Germany (on specific date)"}
@@ -215,7 +215,7 @@
 (def china-dimensions
   {:width 570 :height 450})
 
-(waqi/gaze!
+(waqi/plot!
  (merge-with merge vega-lite-config china-dimensions
              {:data {:name "map"
                      :url "/public/data/china-provinces.geo.json"
@@ -235,7 +235,7 @@
 ;;  - uses red, which has inappropriate emotional valence
 ;; This is more visually appealing and _feels_ useful, but is actually quite deceptive.
 ;; (inspired by https://www.esri.com/arcgis-blog/products/product/mapping/mapping-coronavirus-responsibly/ )
-(waqi/gaze!
+(waqi/plot!
  (merge-with merge vega-lite-config china-dimensions
              {:title {:text "COVID19 cases in China"}
               :data {:name "map"
@@ -264,7 +264,7 @@
 ;; This requires the viewer to understand orders of magnitude, which
 ;; might be appropriate for data science but inappropriate for
 ;; journalism.
-(waqi/gaze!
+(waqi/plot!
  (merge-with merge vega-lite-config china-dimensions
              {:title {:text "COVID19 cases in China per 100k inhabitants, log-scaled"}
               :data {:name "map"

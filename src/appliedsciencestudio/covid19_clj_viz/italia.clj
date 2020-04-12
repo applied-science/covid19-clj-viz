@@ -162,7 +162,7 @@
   {:width 550 :height 700})
 
 ;; Regionally, we can see the north is affected strongly
-(waqi/gaze!
+(waqi/plot!
  (merge-with merge vega-lite-config italy-dimensions
              {:title {:text "COVID19 cases in Italy, by province, per 100k inhabitants"}
               :data {:name "italy"
@@ -177,7 +177,7 @@
               :selection {:highlight {:on "mouseover" :type "single"}}}))
 
 ;; Looking province-by-province, we can see how geographically concentrated the crisis is:
-(waqi/gaze!
+(waqi/plot!
  (merge-with merge vega-lite-config italy-dimensions
              {:title {:text "COVID19 cases in Italy, by province, per 100k inhabitants"}
               :data {:name "italy"

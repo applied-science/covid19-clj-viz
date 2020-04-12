@@ -19,7 +19,7 @@
 ;;;; A bar chart to compare particular countries
 
 ;; Sorted and with some rearranging around `province/country`.
-(waqi/gaze!
+(waqi/plot!
  (merge-with merge vega-lite-config
              {:title {:text "COVID19 cases in selected countries"}
               :width 800, :height 400
@@ -80,7 +80,7 @@
 ;; See https://twitter.com/daveliepmann/status/1237740992905838593
 ;; XXX please note the date range in `compare-cases-in`
 ;; mimicking https://twitter.com/webdevMason/status/1237610911193387008/photo/1
-(waqi/gaze!
+(waqi/plot!
  (merge-with merge vega-lite-config
              {:title {:text "COVID-19, Italy & South Korea: daily new cases"
                       :font (:mono applied-science-font)
@@ -123,7 +123,7 @@
 
 ;;;; ===========================================================================
 ;;;; Daily new cases in a particular country over the past N days
-(waqi/gaze!
+(waqi/plot!
  (merge-with merge vega-lite-config
              {:title {:text "Daily new confirmed COVID-19 cases"
                       :font (:mono applied-science-font)
@@ -211,7 +211,7 @@
 
 
 ;; The rate of infection is relatively constant across countries.
-(waqi/gaze!
+(waqi/plot!
  (merge-with merge vega-lite-config europe-dimensions
              {:title {:text "COVID19 in Europe: Rate of Infection Increase"}
               :data {:values europe-infection-datapoints
@@ -234,7 +234,7 @@
 ;;;; Total Cases of Coronavirus Outside of China
 ;; from Chart 9 https://medium.com/@tomaspueyo/coronavirus-act-today-or-people-will-die-f4d3d9cd99ca
 
-(waqi/gaze!
+(waqi/plot!
  (merge-with merge vega-lite-config
              {:title {:text "Total Cases of Coronavirus Outside of China"
                       :subtitle "(Countries with >50 cases as of 11.3.2020)"}

@@ -180,9 +180,9 @@
 (comment ;; These visualizations are in a `comment` so that folks
          ;; working through `covid19-in-the-repl` don't see unrelated
          ;; visualizations first. Otherwise the standard in this repo
-         ;; is to put `gaze!` calls at the top level.
+         ;; is to put `plot!` calls at the top level.
   
-  (waqi/gaze!
+  (waqi/plot!
    (merge-with merge vega-lite-config
                {:title {:text "Cases in selected German states over time"}
                 :width 1200 :height 700
@@ -207,7 +207,7 @@
 
 ;;;; ===========================================================================
 ;;;; Deaths in <PLACE> (e.g. Berlin) over time
-  (waqi/gaze!
+  (waqi/plot!
    (merge-with merge vega-lite-config
                {:title {:text "Deaths in Berlin over time (log scale)"}
                 :width 750 :height 700
@@ -225,7 +225,7 @@
 
 ;;;; ===========================================================================
 ;;;; Deaths in Germany over time, log scale
-  (waqi/gaze!
+  (waqi/plot!
    (merge-with merge vega-lite-config
                {:title {:text "Deaths in Berlin over time, log-scale"}
                 :width 1200 :height 700
