@@ -102,11 +102,10 @@
       hick/parse
       hick/as-hickory))
 
-;; FIXME
 (def wiki-cumulative-infections-table
   (apply map vector
          ;; "Confirmed cumulative infections" table
-         (conj (butlast (drop 3 (nth (extract-tables wiki-page) 3)))
+         (conj (butlast (drop 3 (nth (extract-tables wiki-page) 2)))
                ["Date"
                 ;; Regions:
                 "Baden-Württemberg" "Bavaria" "Berlin" "Brandenburg" "Bremen"

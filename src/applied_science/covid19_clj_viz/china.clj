@@ -19,3 +19,20 @@
        (mapv #(let [[province pop-s] %]
                 [province (Integer/parseInt (string/replace pop-s "," ""))]))
        (into {})))
+
+(def province-data
+  (reduce-kv (fn [datapoints province n]
+               (conj datapoints
+                     (let [pop (get province-populations province)]
+                       {:province province
+                        :cases n
+                        :population pop
+                        :cases-per-100k (double (/ n (/ pop 100000)))
+                        :cases-binned (cond
+                                        (> n 1000) 1000
+                                        (> n 500)  500
+                                        (> n 200)  200
+                                        (> n 100)  100
+                                        :else      0)})))
+             []
+             cases))

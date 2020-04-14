@@ -65,36 +65,6 @@
 (def germany-dimensions
   {:width 550 :height 700})
 
-(comment
-
-  ;;;; Create new GeoJSONs with COVID19 data added
-
-  ;; China
-  (->> (update (json/read-value (java.io.File. "resources/public/data/china-provinces-original.geo.json")
-                                (json/object-mapper {:decode-key-fn true}))
-               :features
-               (fn [features]
-                 (map (fn [feature]
-                        (let [cases (second (first (filter (comp #{(:province (:properties feature))} first)
-                                                           china/cases)))
-                              pop (get china/province-populations (:province (:properties feature)))
-                              cases-per-100k (double (/ cases (/ pop 100000)))]
-                          (assoc feature
-                                 :province (-> feature :properties :province)
-                                 :cases cases
-                                 :population pop
-                                 :cases-binned (cond
-                                                 (> cases 1000) 1000
-                                                 (> cases 500)  500
-                                                 (> cases 200)  200
-                                                 (> cases 100)  100
-                                                 :else          0)
-                                 :cases-per-100k cases-per-100k)))
-                      features)))
-       (json/write-value (java.io.File. "resources/public/data/china-provinces.geo.json")))
-
-  )
-
 
 ;;;; ===========================================================================
 ;;;; Geographic visualization of cases in each Germany state, shaded proportional to population
@@ -133,17 +103,25 @@
  (merge-with merge vega-lite-config germany-dimensions
              {:title {:text "COVID19 cases in Germany (*not* population-scaled)"}
               :data {:name "germany"
-                     ;; FIXME this keeps getting cached somewhere in Firefox
-                     ;; :url "/public/data/deutschland-bundeslaender.geo.json",
-                     :values deutschland-geojson-with-data
+                     :url "/public/data/deutschland-bundeslaender.geo.json",
                      :format {:property "features"}},
               :mark {:type "geoshape"  :stroke "white" :strokeWidth 1}
-              :encoding {:color {:field "Cases",
+              :transform [{:lookup "properties.NAME_1"
+                           :from {:data {:name "bundeslaender"
+                                         :values (vals deutschland/bundeslaender-data)}
+                                  :key "bundesland"
+                                  :fields ["bundesland"
+                                           "cases"
+                                           "cases-per-100k"
+                                           "difference-carried-forward"
+                                           "deaths"
+                                           "particularly-affected-areas"]}}]              
+              :encoding {:color {:field "cases",
                                  :type "quantitative"
                                  :scale { ;; from https://www.esri.com/arcgis-blog/products/product/mapping/mapping-coronavirus-responsibly/
                                          :range ["#fde5d9" "#a41e23"]}}
-                         :tooltip [{:field "Bundesland" :type "nominal"}
-                                   {:field "Cases" :type "quantitative"}]}
+                         :tooltip [{:field "bundesland" :type "nominal"}
+                                   {:field "cases" :type "quantitative"}]}
               :selection {:highlight {:on "mouseover" :type "single"}}}))
 
 
@@ -201,10 +179,15 @@
 
 (waqi/plot!
  (merge-with merge vega-lite-config china-dimensions
-             {:data {:name "map"
+             {:data {:name "china"
                      :url "/public/data/china-provinces.geo.json"
                      :format {:property "features"}},
               :mark {:type "geoshape" :stroke "white" :strokeWidth 1}
+              :transform [{:lookup "properties.province"
+                           :from {:data {:name "provinces"
+                                         :values china/province-data}
+                                  :key "province"
+                                  :fields ["cases" "cases-per-100k"]}}]
               :encoding {:color {:field "cases-per-100k",
                                  :type "quantitative"}
                          :tooltip [{:field "province" :type "nominal"}
@@ -226,6 +209,11 @@
                      :url "/public/data/china-provinces.geo.json",
                      :format {:property "features"}},
               :mark {:type "geoshape" :stroke "white" :strokeWidth 1}
+              :transform [{:lookup "properties.province"
+                           :from {:data {:name "provinces"
+                                         :values china/province-data}
+                                  :key "province"
+                                  :fields ["cases" "cases-per-100k" "cases-binned"]}}]
               :encoding {:color {:field "cases-binned",
                                  :bin true ;; <-- we pre-processed the
                                            ;; data into bins, so here
@@ -255,6 +243,11 @@
                      :url "/public/data/china-provinces.geo.json",
                      :format {:property "features"}},
               :mark {:type "geoshape" :stroke "white" :strokeWidth 1}
+              :transform [{:lookup "properties.province"
+                           :from {:data {:name "provinces"
+                                         :values china/province-data}
+                                  :key "province"
+                                  :fields ["cases" "cases-per-100k"]}}]
               :encoding {:color {:field "cases-per-100k",
                                  :scale {:type "log"}
                                  :type "quantitative"}
