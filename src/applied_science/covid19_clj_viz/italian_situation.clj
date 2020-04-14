@@ -1,12 +1,12 @@
-(ns appliedsciencestudio.covid19-clj-viz.italian-situation
+(ns applied-science.covid19-clj-viz.italian-situation
   "Following Alan Marazzi's 'The Italian COVID-19 situation' [1] with orthodox Clojure rather than Panthera
 
   Run the original in NextJournal at https://nextjournal.com/alan/getting-started-with-italian-data-on-covid-19
 
   [1] https://alanmarazzi.gitlab.io/blog/posts/2020-3-19-italy-covid/"
   (:require [clojure.data.csv :as csv]
-            [meta-csv.core :as mcsv]
-            [clojure.string :as string]))
+            [clojure.string :as string]
+            [meta-csv.core :as mcsv]))
 
 ;; We can get province data out of Italy's CSV data using the orthodox
 ;; Clojure approach, `clojure.data.csv`:

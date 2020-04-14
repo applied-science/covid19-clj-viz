@@ -1,6 +1,6 @@
-(ns appliedsciencestudio.covid19-clj-viz.china
+(ns applied-science.covid19-clj-viz.china
   (:require [clojure.string :as string]
-            [appliedsciencestudio.covid19-clj-viz.sources.johns-hopkins :as jh]
+            [applied-science.covid19-clj-viz.sources.johns-hopkins :as jh]
             [meta-csv.core :as mcsv]))
 
 (def cases

@@ -1,15 +1,15 @@
-(ns appliedsciencestudio.covid19-clj-viz.south-america
+(ns applied-science.covid19-clj-viz.south-america
   "Visualization of coronavirus situation in South America.
   
   Contributed by Yuliana Apaza and Paula Asto."
-  (:require [appliedsciencestudio.covid19-clj-viz.sources.johns-hopkins :as jh]
-            [appliedsciencestudio.covid19-clj-viz.sources.world-bank :as wb]
-            [appliedsciencestudio.covid19-clj-viz.common :refer [vega-lite-config
-                                                                 applied-science-palette]]
-            [meta-csv.core :as mcsv]
+  (:require [applied-science.covid19-clj-viz.sources.johns-hopkins :as jh]
+            [applied-science.covid19-clj-viz.sources.world-bank :as wb]
+            [applied-science.covid19-clj-viz.common :refer [vega-lite-config
+                                                            applied-science-palette]]
+            [applied-science.waqi :as waqi]
             [clojure.set :refer [rename-keys]]
             [jsonista.core :as json]
-            [applied-science.waqi :as waqi]))
+            [meta-csv.core :as mcsv]))
 
 (def southamerica-cases
   "Current number of COVID19 cases in South America, by countries"

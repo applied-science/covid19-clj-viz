@@ -1,4 +1,4 @@
-(ns appliedsciencestudio.covid19-clj-viz.common
+(ns applied-science.covid19-clj-viz.common
   "Utilities and visualization settings used across the project.")
 
 (def applied-science-palette

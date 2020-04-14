@@ -1,4 +1,4 @@
-(ns appliedsciencestudio.covid19-clj-viz.covid19-in-the-repl
+(ns applied-science.covid19-clj-viz.covid19-in-the-repl
   "Vega-lite visualizations for 'COVID19 in the REPL' article [1].
 
   This is a REPL notebook, meaning it is intended to be executed one
@@ -9,11 +9,10 @@
   namespace is intended to stand somewhat alone.
 
   [1] http://www.appliedscience.studio/articles/covid19.html"
-  (:require [appliedsciencestudio.covid19-clj-viz.china :as china]
-            [appliedsciencestudio.covid19-clj-viz.deutschland :as deutschland]
-            [appliedsciencestudio.covid19-clj-viz.sources.johns-hopkins :as jh]
+  (:require [applied-science.covid19-clj-viz.china :as china]
+            [applied-science.covid19-clj-viz.deutschland :as deutschland]
+            [applied-science.covid19-clj-viz.sources.johns-hopkins :as jh]
             [clojure.set :refer [rename-keys]]
-            [clojure.string :as string]
             [jsonista.core :as json]
             [applied-science.waqi :as waqi]))
 

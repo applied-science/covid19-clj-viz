@@ -1,12 +1,12 @@
-(ns appliedsciencestudio.covid19-clj-viz.deutschland
-  (:require [appliedsciencestudio.covid19-clj-viz.common :refer [applied-science-font
-                                                                 applied-science-palette
-                                                                 vega-lite-config]]
+(ns applied-science.covid19-clj-viz.deutschland
+  (:require [applied-science.covid19-clj-viz.common :refer [applied-science-font
+                                                            applied-science-palette
+                                                            vega-lite-config]]
+            [applied-science.waqi :as waqi]
             [clojure.string :as string]
             [hickory.core :as hick]
             [hickory.select :as s]
-            [meta-csv.core :as mcsv]
-            [applied-science.waqi :as waqi]))
+            [meta-csv.core :as mcsv]))
 
 (defn normalize-bundesland
   "Standardizes English/German & typographic variation in German state names to standard German spelling.
@@ -102,6 +102,7 @@
       hick/parse
       hick/as-hickory))
 
+;; FIXME
 (def wiki-cumulative-infections-table
   (apply map vector
          ;; "Confirmed cumulative infections" table

@@ -1,13 +1,13 @@
-(ns appliedsciencestudio.covid19-clj-viz.italia
+(ns applied-science.covid19-clj-viz.italia
   "Visualization of coronavirus situation in Italy.
 
   Contributed by David Schmudde.
 
   Relies on https://github.com/pcm-dpc/COVID-19 to be cloned into the `resources` directory."
-  (:require [appliedsciencestudio.covid19-clj-viz.common :refer [vega-lite-config]]
+  (:require [applied-science.covid19-clj-viz.common :refer [vega-lite-config]]
+            [applied-science.waqi :as waqi]
             [jsonista.core :as json]
-            [meta-csv.core :as mcsv]
-            [applied-science.waqi :as waqi]))
+            [meta-csv.core :as mcsv]))
 
 ;;;;;;;;;;;;;;;;;;;;
 ;; Conform Functions
