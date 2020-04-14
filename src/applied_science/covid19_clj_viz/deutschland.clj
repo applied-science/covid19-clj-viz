@@ -1,6 +1,5 @@
 (ns applied-science.covid19-clj-viz.deutschland
-  (:require [applied-science.covid19-clj-viz.common :refer [applied-science-font
-                                                            applied-science-palette
+  (:require [applied-science.covid19-clj-viz.common :refer [applied-science-palette
                                                             vega-lite-config]]
             [applied-science.waqi :as waqi]
             [clojure.string :as string]

@@ -5,8 +5,5 @@
         hickory {:mvn/version "0.7.1"}
         meta-csv {:mvn/version "0.1.0"}
         metosin/jsonista {:mvn/version "0.2.5"}
-        ;; When waqi was first (before even Clojure) in this map, we
-        ;; got a FileNotFoundException with ring.util.response. Moving
-        ;; waqi out of first position irrevocably fixed this. :shrug:
         applied-science/waqi {:git/url "https://github.com/applied-science/waqi"
                               :sha "0d627035efdd019805101e4f4c0a083867cf5c7b"}}}

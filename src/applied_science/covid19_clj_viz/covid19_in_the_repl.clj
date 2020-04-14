@@ -13,7 +13,6 @@
             [applied-science.covid19-clj-viz.deutschland :as deutschland]
             [applied-science.covid19-clj-viz.sources.johns-hopkins :as jh]
             [clojure.set :refer [rename-keys]]
-            [jsonista.core :as json]
             [applied-science.waqi :as waqi]))
 
 ;; Our visualizations are powered by Vega(-lite), which we connect to

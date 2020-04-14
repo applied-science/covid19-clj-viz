@@ -7,7 +7,6 @@
             [applied-science.covid19-clj-viz.common :refer [vega-lite-config
                                                             applied-science-palette]]
             [applied-science.waqi :as waqi]
-            [clojure.set :refer [rename-keys]]
             [jsonista.core :as json]
             [meta-csv.core :as mcsv]))
 
